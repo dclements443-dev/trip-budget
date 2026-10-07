@@ -337,7 +337,7 @@
       -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
     }
-    .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 32px 0 12px; }
+    .quick-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 32px 0 12px; }
     .quick-actions button { display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; font-weight: 500; color: var(--hero-ink); }
     .qa-icon {
       width: 48px;
@@ -789,6 +789,26 @@
     .split-quick button { flex: 1; min-width: 0; min-height: 40px; border-radius: 999px; background: var(--fill-strong); font-size: 16px; color: var(--ink); }
     .split-quick button:active { transform: scale(0.96); }
     .split-error { margin: 4px 0 0; font-size: 13px; }
+    /* Quick converter: the answer in a card, then what each banknote is worth */
+    .convert-card { position: relative; display: grid; gap: 10px; margin-top: 8px; padding: 16px; border-radius: 18px; background: var(--sheet-card); }
+    .convert-head { display: flex; align-items: center; justify-content: space-between; min-height: 36px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+    .convert-zeros.qchip { margin-left: auto; margin-right: 10px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--fill-strong); color: var(--ink); font-weight: 600; }
+    .convert-swap { display: grid; place-items: center; width: 44px; height: 44px; margin: -4px -6px -4px 0; border-radius: 50%; background: var(--fill-strong); color: var(--ink); transition: transform 0.25s; }
+    .convert-swap:active { transform: rotate(180deg) scale(0.92); }
+    .convert-swap .glyph { width: 20px; height: 20px; }
+    .convert-result { min-width: 0; font-size: 40px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .convert-result.waiting { color: var(--ink-3); }
+    .convert-result small { font-size: 24px; font-weight: 500; color: var(--ink-2); margin-right: 4px; }
+    .convert-to .choice label { min-height: 40px; background: var(--fill-strong); }
+    .convert-to .choice input:checked + label { background: var(--choice-on); }
+    .convert-rate, .convert-card-fee { margin: 0; font-size: 13px; color: var(--ink-2); }
+    .note-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .note-tile { display: grid; gap: 2px; min-height: 56px; padding: 8px 10px; border-radius: 14px; background: var(--sheet-card); text-align: left; font-variant-numeric: tabular-nums; transition: transform 0.15s; }
+    .note-tile:active { transform: scale(0.96); }
+    .note-tile b { font-size: 15px; font-weight: 600; }
+    .note-tile span { font-size: 13px; color: var(--ink-2); }
+    .convert-log { display: flex; width: 100%; margin-top: 18px; }
+
     .split-error:empty { display: none; }
     .stepper { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 4px 4px 4px 16px; border-radius: 14px; background: var(--sheet-card); }
     .stepper > span { flex: 1; font-weight: 500; }
@@ -918,6 +938,202 @@
     .sheet.dragging, .backdrop.dragging { transition: none; }
 
     /* Respect the phone's "Reduce Motion" setting */
+    /* ---------- Trip Wrapped ---------- */
+    /* Ways in: a card on Home, a pill in Insights, a row in Settings */
+    .wrap-tile { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: #FFFFFF;
+      background: radial-gradient(70% 70% at 25% 30%, #5E8BFF, transparent 70%), radial-gradient(60% 60% at 85% 15%, #A46BFF, transparent 70%), linear-gradient(165deg, #1D33F0, #3A1FD6 60%, #26139E); }
+    .wrap-tile .glyph { width: 20px; height: 20px; fill: #FFFFFF; stroke: none; }
+    .wrap-pill { display: inline-flex; align-items: center; min-height: 40px; margin-top: 12px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--btn-2-ink); background: var(--btn-2-bg); }
+    html.wr-open { overflow: hidden; }
+    html.wr-open .hero-bg::before { animation-play-state: paused; }
+
+    /* The story: always dark, whatever the phone's theme (its colours are its own, not the app's tokens) */
+    .wr { position: fixed; inset: 0; z-index: 55; color: #FFFFFF; background: rgba(8, 6, 40, calc(0.6 * var(--wr-dim, 1)));
+      touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+      --wr-ink-2: rgba(255, 255, 255, 0.82); --wr-ink-3: rgba(255, 255, 255, 0.62); animation: fade-in 0.2s backwards; }
+    .wr.closing { opacity: 0; transition: opacity 0.2s; }
+    .wr-frame { position: absolute; inset: 0; margin: 0 auto; overflow: hidden; background: #1A1570; transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+    .wr.dragging .wr-frame { transition: none; }
+    @media (min-width: 600px) and (min-height: 700px) { .wr-frame { top: 12px; bottom: 12px; width: min(100vw, calc((100dvh - 24px) * 9 / 16)); border-radius: 24px; } }
+    .wr-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+    .wr-bg i { position: absolute; display: block; }
+    .wr-aurora { inset: -25%;
+      background: radial-gradient(40% 40% at 24% 30%, #5E8BFF 0%, transparent 70%), radial-gradient(36% 36% at 80% 20%, #A46BFF 0%, transparent 72%),
+        radial-gradient(40% 40% at 70% 66%, #7B4DFF 0%, transparent 70%), linear-gradient(165deg, #1D33F0 0%, #3A1FD6 60%, #26139E 100%);
+      animation: aurora 26s ease-in-out infinite alternate; transition: opacity 0.5s; }
+    .wr-night { inset: 0; background: linear-gradient(180deg, #0B0C10, #171A3A); opacity: 0; transition: opacity 0.5s; }
+    .wr-frame[data-base="night"] .wr-night { opacity: 1; }
+    .wr-blob { width: 120vmax; height: 120vmax; left: -60vmax; bottom: -60vmax; border-radius: 50%; opacity: 0; transition: opacity 0.6s;
+      -webkit-mask-image: radial-gradient(closest-side, #000, transparent); mask-image: radial-gradient(closest-side, #000, transparent); }
+    .wr-blob.on { opacity: 0.55; }
+
+    /* Progress bars, pause and close */
+    .wr-chrome { position: absolute; top: 0; left: 0; right: 0; z-index: 3; padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 0; transition: opacity 0.25s; }
+    .wr.held .wr-chrome { opacity: 0; }
+    .wr-bars { display: flex; gap: 4px; }
+    .wr-seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); overflow: hidden; }
+    .wr-seg i { display: block; height: 100%; background: #FFFFFF; transform: scaleX(0); transform-origin: left; }
+    .wr-top { display: flex; align-items: center; gap: 8px; height: 44px; margin-top: 6px; }
+    .wr-mark { font-size: 15px; font-weight: 600; color: var(--wr-ink-2); }
+    .wr-badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255, 255, 255, 0.16); }
+    .wr-top button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: #FFFFFF; background: rgba(255, 255, 255, 0.16); }
+    .wr-top button:first-of-type { margin-left: auto; }
+    .wr-top .glyph { width: 20px; height: 20px; }
+    .wr-ico-pause, .wr-ico-play { fill: currentColor; stroke: none; }
+    #wr-pause[aria-pressed="true"] .wr-ico-pause, #wr-pause[aria-pressed="false"] .wr-ico-play { display: none; }
+
+    /* Slides, and the tap zones over them (left 30% back, right 70% on) */
+    .wr-stage { position: absolute; inset: 0; z-index: 1; }
+    .wr-zone { position: absolute; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + 64px); bottom: 20px; -webkit-tap-highlight-color: transparent; }
+    .wr-zone.prev { left: 0; width: 30%; }
+    .wr-zone.next { right: 0; width: 70%; }
+    .wr-zone:focus-visible { outline: 2px solid #FFFFFF; outline-offset: -6px; }
+    .wr-frame[data-last="true"] .wr-zone.next { display: none; }
+    .wr-frame[data-last="true"] .wr-zone.prev { width: 20%; bottom: 55%; }
+    .wr-slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px;
+      padding: calc(env(safe-area-inset-top, 0px) + 76px) 24px calc(env(safe-area-inset-bottom, 0px) + 28px); }
+    .wr-slide > * { width: 100%; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .wr-slide.leaving { opacity: 0; transition: opacity 0.16s; }
+    .wr.paused .wr-slide, .wr.paused .wr-slide * { animation-play-state: paused; }
+    .wr-in { animation: wr-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--d, 0) * 90ms + 120ms) backwards; }
+    @keyframes wr-rise { from { opacity: 0; transform: translateY(12px); } }
+    @keyframes wr-pop { from { opacity: 0; transform: scale(0.6); } }
+    @keyframes wr-grow-x { from { transform: scaleX(0); } }
+    @keyframes wr-grow-y { from { transform: scaleY(0); } }
+    @keyframes wr-draw { from { stroke-dashoffset: 1; } }
+
+    /* Type */
+    .wr-kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.75); }
+    .wr-h { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; text-wrap: balance; outline: none; }
+    .wr-h-small { font-size: 22px; }
+    .wr-title { margin: 0; font-size: min(12vw, 7dvh, 48px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; white-space: nowrap; outline: none; }
+    .wr-word { margin: 0; font-size: min(15vw, 8.5dvh, 72px); font-weight: 700; letter-spacing: -0.04em; line-height: 1; white-space: nowrap; outline: none; }
+    .wr-big { display: inline-block; font-size: min(24vw, 13dvh, 132px); font-weight: 700; letter-spacing: -0.05em; line-height: 0.95; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .wr-big-cash { font-size: min(13vw, 8dvh, 64px); letter-spacing: -0.03em; }
+    .wr-in-big { margin: 0; }
+    .wr-p { margin: 0; font-size: 19px; font-weight: 500; line-height: 1.35; color: var(--wr-ink-2); }
+    .wr-dim { font-size: 17px; color: var(--wr-ink-3); }
+    .wr-foot { margin: 0; font-size: 13px; font-weight: 500; line-height: 1.35; color: var(--wr-ink-3); }
+    .wr-count { position: relative; }
+    .wr-ghost { visibility: hidden; }
+    .wr-num { position: absolute; top: 0; left: 0; }
+    .wr-pop { display: inline-block; font-style: normal; animation: wr-pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1s backwards; }
+    .wr-rows { display: grid; gap: 6px; }
+    .wr-row { margin: 0; font-size: 15px; color: var(--wr-ink-2); }
+    .wr-row b { font-size: 22px; font-weight: 700; color: #FFFFFF; font-variant-numeric: tabular-nums; }
+
+    /* Cover: the route */
+    .wr-route { position: relative; aspect-ratio: 320 / 120; margin: 14px auto 34px !important; }
+    .wr-route svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .wr-path { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0;
+      animation: wr-draw 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards; }
+    .wr-stop { position: absolute; display: grid; place-items: center; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: #FFFFFF;
+      animation: wr-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) calc(var(--d) * 400ms + 400ms) backwards; }
+    .wr-stop b { font-size: 28px; line-height: 1; }
+    .wr-stop small { position: absolute; top: 62px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 14px; font-weight: 600; color: #FFFFFF; }
+
+    /* Personality: ranked bars */
+    .wr-hbars { display: grid; gap: 9px; }
+    .wr-hrow { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; column-gap: 10px; row-gap: 5px; }
+    .wr-ico { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #FFFFFF; background: var(--c); }
+    .wr-ico .glyph { width: 14px; height: 14px; }
+    .wr-hname { font-size: 15px; font-weight: 600; }
+    .wr-hval { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--wr-ink-2); }
+    .wr-htrack { grid-column: 2 / 4; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+    .wr-htrack i { display: block; width: calc(var(--w) * 100%); height: 100%; border-radius: 4px; background: var(--c); transform-origin: left;
+      animation: wr-grow-x 0.7s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--d) * 80ms + 400ms) backwards; }
+
+    /* Your regular: a top-5 list */
+    .wr-top5 { display: grid; gap: 8px; margin: 4px auto 0; padding: 0; list-style: none; }
+    .wr-top5 li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: baseline; gap: 10px; }
+    .wr-top5 b { font-size: 34px; font-weight: 700; line-height: 1; color: transparent; -webkit-text-stroke: 1.5px #FFFFFF; }
+    .wr-top5 span { overflow: hidden; font-size: 19px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .wr-top5 em { font-size: 15px; font-weight: 600; font-style: normal; font-variant-numeric: tabular-nums; color: var(--wr-ink-2); }
+
+    /* Biggest day: a bar a day */
+    .wr-days { width: 100%; height: auto; overflow: visible; }
+    .wr-bar { fill: rgba(255, 255, 255, 0.35); transform-box: fill-box; transform-origin: bottom; animation: wr-grow-y 0.5s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--t) + 300ms) backwards; }
+    .wr-bar.big { fill: #FAB219; }
+    .wr-bar.thrifty { fill: #1BAF7A; }
+    .wr-chart-pill { fill: #FAB219; font-size: 13px; font-weight: 700; animation: wr-rise 0.4s 0.9s backwards; }
+
+    /* Holidays: postcards */
+    .wr-cards { display: grid; gap: 14px; }
+    .wr-postcard { position: relative; display: grid; gap: 6px; padding: 18px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 24px; background: rgba(255, 255, 255, 0.1); transform: rotate(var(--tilt)); }
+    .wr-postcard b { font-size: 17px; font-weight: 700; }
+    .wr-postcard span { font-size: 16px; line-height: 1.35; color: var(--wr-ink-2); }
+    .wr-sparkles { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; background-image: radial-gradient(#FAB219 1.5px, transparent 2px); background-size: 38px 30px;
+      animation: wr-twinkle 1.6s ease-in-out infinite alternate; }
+    @keyframes wr-twinkle { from { opacity: 0.15; } }
+
+    /* Teamwork: a split bar */
+    .wr-split { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 10px; }
+    .wr-av { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; font-weight: 700; color: #0B0C10; }
+    .wr-av.a, .wr-splitbar i.a { background: #B9B0FF; }
+    .wr-av.b, .wr-splitbar i.b { background: #5FE0E4; }
+    .wr-splitbar { display: flex; height: 16px; overflow: hidden; border-radius: 8px; background: rgba(255, 255, 255, 0.12); }
+    .wr-splitbar i { display: block; flex: 0 0 calc(var(--w) * 100%); height: 100%; animation: wr-grow-x 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.5s backwards; }
+    .wr-splitbar i.a { transform-origin: left; }
+    .wr-splitbar i.b { transform-origin: right; }
+
+    /* The small print: a paper receipt with zigzag edges */
+    .wr-receipt { padding: 24px 20px 20px; color: #0B0C10; background: #F7F5EF;
+      -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 51% repeat-x,
+        conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 16px 51% repeat-x;
+      mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 51% repeat-x,
+        conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 16px 51% repeat-x; }
+    .wr-receipt ul { display: grid; gap: 9px; margin: 12px 0 0; padding: 0; list-style: none; }
+    .wr-rhead { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-align: center; color: #55565C; }
+    .wr-line { display: flex; align-items: baseline; gap: 6px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .wr-line i { flex: 1; min-width: 12px; border-bottom: 2px dotted rgba(11, 12, 16, 0.3); transform: translateY(-4px); }
+    .wr-line b { white-space: nowrap; }
+    .wr-receipt small { display: block; margin-top: 2px; font-size: 12px; color: #55565C; }
+    .wr-total { display: flex; justify-content: space-between; margin: 14px 0 0; padding-top: 10px; border-top: 3px double #0B0C10; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .wr-rfoot { margin: 10px 0 0; font-size: 12px; text-align: center; color: #55565C; }
+    .wr-print { animation: wr-print 0.35s ease-out calc(var(--d) * 450ms + 500ms) backwards; }
+    @keyframes wr-print { from { opacity: 0; transform: translateY(-8px); } }
+
+    /* The verdict: a bar per country, with a tick at its budget */
+    .wr-vrows { display: grid; gap: 12px; }
+    .wr-vrow { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; font-size: 15px; font-weight: 600; }
+    .wr-vleft { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--wr-ink-2); }
+    .wr-vtrack { position: relative; grid-column: 1 / 3; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.12); }
+    .wr-vtrack i { position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--w) * 100%); border-radius: 5px; background: #FFFFFF; transform-origin: left;
+      animation: wr-grow-x 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s backwards; }
+    .wr-vtrack i.over { background: #FAB219; animation-delay: 1.1s; }
+    .wr-vtrack b { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: #FFFFFF; animation: wr-rise 0.3s 0.9s backwards; }
+
+    /* Snapshots */
+    .wr-grid { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .wr-grid.two { grid-template-columns: repeat(2, 1fr); }
+    .wr-tile { width: 100%; aspect-ratio: 1; border-radius: 14px; object-fit: cover; pointer-events: none;
+      animation: wr-pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3) calc(var(--d) * 60ms + 300ms) backwards; }
+    .wr-photo-hero { position: absolute; inset: 0; margin: 0; overflow: hidden; border-radius: 16px; animation: wr-hero 0.6s cubic-bezier(0.22, 1, 0.36, 1) 2.5s backwards; }
+    .wr-photo-hero img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; animation: wr-kb 6s ease-out 2.5s backwards; }
+    .wr-photo-hero figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 36px 14px 12px; font-size: 14px; font-weight: 600; background: linear-gradient(transparent, rgba(0, 0, 0, 0.6)); }
+    @keyframes wr-hero { from { opacity: 0; transform: scale(0.85); } }
+    @keyframes wr-kb { from { transform: scale(1.06); } }
+
+    /* That's a wrap: the card, its options and buttons */
+    .wr-cardbox { display: grid; place-items: center; }
+    .wr-cardimg, .wr-cardwait { height: min(44dvh, 560px); aspect-ratio: 9 / 16; max-width: 100%; border-radius: 20px; }
+    .wr-cardimg { width: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); -webkit-touch-callout: default; -webkit-user-select: auto; user-select: auto; pointer-events: auto;
+      animation: wr-card 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards; }
+    @keyframes wr-card { from { opacity: 0; transform: scale(0.94) rotate(-2deg); } }
+    .wr-cardwait { display: grid; place-items: center; font-size: 14px; color: var(--wr-ink-2); background: rgba(255, 255, 255, 0.12); }
+    .wr-chips { display: flex; justify-content: center; gap: 8px; }
+    .wr-chip { min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: #FFFFFF; background: rgba(255, 255, 255, 0.16); }
+    .wr-chip[aria-pressed="true"] { color: #1A1570; background: #FFFFFF; }
+    .wr-actions { display: flex; gap: 8px; }
+    .wr-btn { flex: 1; min-height: 48px; border-radius: 999px; font-size: 16px; font-weight: 600; color: #FFFFFF; background: rgba(255, 255, 255, 0.16); }
+    .wr-btn.primary { color: #1A1570; background: #FFFFFF; }
+    .wr-btn:disabled { opacity: 0.6; }
+    .wr-chip:focus-visible, .wr-btn:focus-visible, .wr-top button:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .wr-photo-hero { display: none; }   /* without the animation it would cover the grid from the start */
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
       .check-path { stroke-dashoffset: 0 !important; }
@@ -962,6 +1178,9 @@
           <button type="button" data-action="add-expense">
             <span class="qa-icon"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>Add
           </button>
+          <button type="button" data-action="convert">
+            <span class="qa-icon"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 4 4-4 4"/><path d="M20 7H9a5 5 0 0 0-5 5"/><path d="m8 21-4-4 4-4"/><path d="M4 17h11a5 5 0 0 0 5-5"/></svg></span>Convert
+          </button>
           <button type="button" data-action="add-cash">
             <span class="qa-icon"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></span>Cash
           </button>
@@ -972,6 +1191,13 @@
             <span class="qa-icon"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span>Back up
           </button>
         </div>
+      </div>
+
+      <!-- Trip Wrapped: on Home once the trip is over -->
+      <div class="notice wrap-entry" id="wrap-entry" hidden>
+        <span class="wrap-tile" aria-hidden="true"><svg class="glyph" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+        <p><strong id="wrap-entry-title">Your Trip Wrapped is ready</strong><span id="wrap-entry-text"></span></p>
+        <button type="button" data-action="open-wrapped">Watch</button>
       </div>
 
       <div class="notice example" id="example-notice" hidden>
@@ -1041,6 +1267,7 @@
         <span class="micro" id="ins-label">Total spent</span>
         <div class="big" id="ins-total"></div>
         <div class="sub" id="ins-sub"></div>
+        <button type="button" class="wrap-pill" id="wrap-ins" data-action="open-wrapped" hidden>Play Trip Wrapped</button>
       </div>
 
       <div class="section-head"><h2>Spending pattern</h2></div>
@@ -1130,6 +1357,12 @@
       </div>
       <div class="group-footer" id="install-help"></div>
 
+      <div class="group-title">Trip Wrapped</div>
+      <div class="card">
+        <button type="button" class="row row-action" id="wrap-settings-btn" data-action="open-wrapped">Preview Trip Wrapped</button>
+      </div>
+      <div class="group-footer" id="wrap-settings-foot"></div>
+
       <div class="group-title">Your data</div>
       <div class="card">
         <button type="button" class="row row-action" id="backup-btn">Back up everything (incl. photos)</button>
@@ -1207,6 +1440,24 @@
         <p class="rate-note" id="rate-note"></p>
       </div>
 
+      <!-- Quick converter: the answer, right under the price so it stays above the keypad -->
+      <div id="convert-answer" hidden>
+        <div class="convert-card">
+          <div class="convert-head">
+            <span id="convert-in">In pounds</span>
+            <!-- +000 up here too, so it's above the keypad -->
+            <button type="button" class="qchip convert-zeros" id="convert-zeros" aria-label="Add three zeros" hidden>+000</button>
+            <button type="button" class="convert-swap" id="convert-swap" aria-label="Swap the two currencies">
+              <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+            </button>
+          </div>
+          <div class="convert-result" id="convert-result" aria-live="polite"></div>
+          <div class="choices cols-4 convert-to" id="convert-to-choices" role="radiogroup" aria-label="Convert to"></div>
+          <p class="convert-rate" id="convert-rate"></p>
+          <p class="convert-card-fee" id="convert-card-fee" hidden></p>
+        </div>
+      </div>
+
       <!-- Shown for new expenses: the things you buy most often in this country, one tap to fill in -->
       <div class="regulars" id="regulars" role="group" aria-label="Regulars" hidden></div>
 
@@ -1221,8 +1472,8 @@
         <div class="choices cols-5" id="currency-choices"></div>
       </fieldset>
 
-      <div class="quick-row">
-        <label class="qchip">
+      <div class="quick-row" id="quick-row">
+        <label class="qchip" id="date-chip">
           <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           <span id="date-label">Today</span>
           <input type="date" id="date" aria-label="Date">
@@ -1236,7 +1487,16 @@
         <button type="button" class="qchip" id="zeros-btn" aria-label="Add three zeros" hidden>+000</button>
       </div>
 
-      <div class="field">
+      <!-- Shown for the quick converter: nothing here is saved -->
+      <div id="convert-fields" hidden>
+        <div class="field" id="convert-notes-field">
+          <p class="field-label" id="convert-notes-label">Notes at a glance</p>
+          <div class="note-grid" id="convert-notes"></div>
+        </div>
+        <button type="button" class="btn-ghost convert-log" id="convert-log">Log as an expense</button>
+      </div>
+
+      <div class="field" id="note-field">
         <label class="field-label" for="note">Note</label>
         <input class="note-input" type="text" id="note" maxlength="80" placeholder="e.g. Pho in Hanoi" enterkeyhint="done">
       </div>
@@ -1351,6 +1611,28 @@
   <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Photo" hidden>
     <button type="button" class="viewer-close" id="viewer-close">Close</button>
     <img id="viewer-img" alt="Expense photo">
+  </div>
+
+  <!-- Trip Wrapped: the story of the trip, full screen (see "10b. Trip Wrapped") -->
+  <div class="wr" id="wrapped" role="dialog" aria-modal="true" aria-label="Trip Wrapped" hidden>
+    <div class="wr-frame" id="wr-frame">
+      <div class="wr-bg" aria-hidden="true"><i class="wr-aurora"></i><i class="wr-night"></i><i class="wr-blob"></i><i class="wr-blob"></i></div>
+      <div class="wr-chrome">
+        <div class="wr-bars" id="wr-bars" aria-hidden="true"></div>
+        <div class="wr-top">
+          <span class="wr-mark">Trip Wrapped</span><span class="wr-badge" id="wr-badge" hidden>Example data</span>
+          <button type="button" id="wr-pause" aria-pressed="false" aria-label="Pause">
+            <svg class="glyph wr-ico-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            <svg class="glyph wr-ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7z"/></svg>
+          </button>
+          <button type="button" id="wr-close" aria-label="Close Trip Wrapped"><svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+      <div class="wr-stage" id="wr-stage"></div>
+      <button type="button" class="wr-zone prev" id="wr-prev" aria-label="Previous slide"></button>
+      <button type="button" class="wr-zone next" id="wr-next" aria-label="Next slide"></button>
+      <p class="visually-hidden" id="wr-live" aria-live="polite"></p>
+    </div>
   </div>
 
   <div class="dialog-backdrop" id="dialog" hidden>
@@ -1580,7 +1862,7 @@
     // ---------- 5. State ----------
     let data = loadData();
     let editing = null;            // null, or { kind: "expense" | "payment" | "cash", id }
-    let sheetMode = "expense";     // which form the sheet shows: "expense", "payment" or "cash"
+    let sheetMode = "expense";     // which form the sheet shows: "expense", "payment", "cash" or "convert"
     let saving = false;            // true while a save is in progress
     let currencyTouched = false;   // did you pick the currency yourself this time?
     let countryTouched = false;    // ...and the country? (if not, changing the date can pick it from your route)
@@ -3043,6 +3325,1059 @@
       $("fees-card").innerHTML = html;
     }
 
+    // ---------- 10b. Trip Wrapped ----------
+    // A Spotify-Wrapped-style story of the trip: full-screen slides that play by themselves (tap the right side
+    // to skip, the left to go back, hold to pause, swipe down to close) and end on a card you can share.
+    // It only READS your data. Everything is worked out once, when it opens (wrapModel), so nothing on screen
+    // changes mid-story. The only things saved are a few per-phone choices (seen it? amounts on the card?).
+    const WRAP_PREFS_KEY = STORAGE_KEY + "-wrapped";
+    const WR = {
+      open: false, slides: [], i: 0, anim: null, pausedBy: new Set(), manual: false, W: null, opener: null,
+      card: null, cardTimer: 0, raf: 0, swallow: false, ptr: null, slideStart: 0, saved: null,
+      RM: matchMedia("(prefers-reduced-motion: reduce)")
+    };
+    // The dark-mode category colours (the story is always dark, whatever the phone's theme)
+    const WR_CAT = { Food: "#D95926", Activities: "#C98500", Transport: "#199E70", Nightlife: "#D55181", Accommodation: "#3987E5", Other: "#8E8E93" };
+    const WR_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
+    const WR_MONEY = { VND: "dong", USD: "dollar", THB: "baht", KHR: "riel", GBP: "pound" };
+    const WR_PERSONA = { Food: "The Grazers", Activities: "The Doers", Transport: "The Road Warriors", Nightlife: "The Night Shift", Nesters: "The Nesters" };
+    const wrSleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const wrCap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const wrPct = n => Math.round(n) + "%";
+    const wrNote = e => ((e.note || "").trim() || e.category);
+    const wrPence = n => (n < 1 ? Math.max(1, Math.round(n * 100)) + "p" : gbp(n));
+
+    function wrPrefs() {
+      const base = { seen: false, amounts: true, regular: true };
+      try { return { ...base, ...JSON.parse(localStorage.getItem(WRAP_PREFS_KEY) || "{}") }; } catch (err) { return base; }
+    }
+    function wrSavePrefs(prefs) {
+      try { localStorage.setItem(WRAP_PREFS_KEY, JSON.stringify(prefs)); } catch (err) { /* the choices just aren't remembered */ }
+    }
+    // The two names, sorted so both phones tell the same story (null while either is still "Me" or "Partner")
+    const wrDefaultName = who => data.names[who].trim().toLowerCase() === (who === "me" ? "me" : "partner") || !data.names[who].trim();
+    function coupleName() {
+      if (wrDefaultName("me") || wrDefaultName("partner")) return null;
+      return [data.names.me.trim(), data.names.partner.trim()].sort((x, y) => x.localeCompare(y));
+    }
+    const wrName = who => (wrDefaultName(who) ? (who === "me" ? "you" : "your partner") : data.names[who].trim());
+    const wrPossessive = who => (wrDefaultName(who) ? (who === "me" ? "your" : "your partner's") : data.names[who].trim() + "'s");
+
+    // "final" from the morning of the last day, "sofar" during the trip, "preview" (example data) before it
+    function wrapMode() {
+      const t = tripProgress();
+      return t.today >= t.end ? "final" : t.today >= t.start ? "sofar" : "preview";
+    }
+    // Enough real spending to tell a story? (Otherwise the example preview is offered instead)
+    function wrapReady(mode = wrapMode()) {
+      if (mode === "preview") return true;
+      const real = data.expenses.filter(e => !e.example && e.country !== PRE_TRIP);
+      const ok = real.length >= 8 && sumGBP(real) >= 20;
+      return mode === "sofar" ? ok && tripProgress().elapsed >= 3 : ok;
+    }
+    function wrapScope(mode) {
+      const t = tripProgress();
+      return mode === "sofar" ? { start: t.start, end: t.end, asOf: t.today, days: t.elapsed } : { start: t.start, end: t.end, asOf: t.end, days: t.total };
+    }
+
+    // Run fn with the built-in example trip standing in for your data, then put your data straight back.
+    // Synchronous on purpose: nothing can save the examples over your trip while they're swapped in.
+    function withExampleData(fn) {
+      const real = data;
+      const start = real.trip.start;
+      data = { ...real, trip: { start, end: addDays(start, 9) }, route: { ...real.route, Cambodia: addDays(start, 5), Thailand: addDays(start, 8) },
+        expenses: [], payments: [], cashMoves: [], deleted: {} };
+      try {
+        Object.assign(data, buildExamples(start));
+        return fn();
+      } finally {
+        data = real;
+      }
+    }
+
+    // Every number the story needs, worked out once. The only function here that reads your data.
+    function wrapModel(mode, extra = {}) {
+      const scope = wrapScope(mode);
+      const t = tripProgress();
+      const keep = x => mode === "preview" || !x.example;   // example entries never count in your real story
+      const ALL = spending().filter(keep);
+      const L = ALL.filter(e => e.country !== PRE_TRIP);          // the trip itself (Home's "spent")
+      const PRE = ALL.filter(e => e.country === PRE_TRIP);
+      const ITEMS = L.filter(e => !e.isFee);                      // things you logged (fees are worked out)
+      const REAL = ITEMS.filter(e => (e.note || "").trim() !== UNTRACKED_NOTE);
+      const MOVES = data.cashMoves.filter(m => keep(m) && m.kind !== "count" && (m.country || "") !== PRE_TRIP);
+      const total = sumGBP(L);
+      const perDay = scope.days ? sumGBP(L.filter(e => e.date >= t.start && e.date <= t.end)) / scope.days : 0;
+      // During the trip, things booked for later (next week's hotel) aren't places you've been yet
+      const SOFAR = mode === "sofar" ? ITEMS.filter(e => e.date <= scope.asOf) : ITEMS;
+
+      // The route: countries in order, with their days when the route dates are filled in
+      let countries = COUNTRIES.filter(c => SOFAR.some(e => e.country === c))
+        .map(c => ({ c, gbp: sumGBP(L.filter(e => e.country === c)), stint: countryStint(c), daysIn: null }));
+      if (countries.length && countries.every(x => x.stint)) {
+        countries.forEach(x => {
+          const from = x.stint.start > scope.start ? x.stint.start : scope.start;
+          const to = x.stint.end < scope.asOf ? x.stint.end : scope.asOf;
+          x.daysIn = Math.max(0, daysBetween(from, to) + 1);
+        });
+        if (mode === "sofar") countries = countries.filter(x => x.daysIn > 0);
+      }
+
+      // Local money
+      const byCur = {};
+      for (const e of SOFAR) {
+        const r = byCur[e.currency] || (byCur[e.currency] = { code: e.currency, native: 0, gbp: 0, n: 0 });
+        r.native += e.amount; r.gbp += gbpOf(e); r.n++;
+      }
+      const currencies = Object.values(byCur).sort((a, b) => (a.code === "GBP") - (b.code === "GBP") || b.gbp - a.gbp);
+
+      // Categories (fees and old categories land in Other, as in the Insights ring) and the travel personality
+      const cats = CATEGORIES.map(name => ({ name, gbp: 0, pct: 0 }));
+      for (const [name, value] of Object.entries(groupTotals(L, "category"))) (cats.find(c => c.name === name) || cats[cats.length - 1]).gbp += value;
+      cats.forEach(c => { c.pct = total ? (c.gbp / total) * 100 : 0; });
+      const personaCat = cats.filter(c => ["Food", "Transport", "Activities", "Nightlife"].includes(c.name) && c.gbp > 0).sort((a, b) => b.gbp - a.gbp)[0];
+      const beds = cats.find(c => c.name === "Accommodation");
+      const night = cats.find(c => c.name === "Nightlife");
+      cats.sort((a, b) => b.gbp - a.gbp);
+      const persona = personaCat ? personaCat.name : "Nesters";
+
+      // The regular: the note you logged most often ("Bánh mì", "banh mi" and "Banh Mi" are one)
+      const norm = s => s.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ");
+      const groups = {};
+      for (const e of REAL) {
+        const note = (e.note || "").trim();
+        if (!note) continue;
+        const g = groups[norm(note)] || (groups[norm(note)] = { count: 0, gbp: 0, native: 0, spell: {}, currencies: new Set(), min: Infinity, max: 0, cats: {} });
+        g.count++; g.gbp += gbpOf(e); g.native += e.amount;
+        const sp = g.spell[note] || (g.spell[note] = { n: 0, last: "" });
+        sp.n++; if (e.date >= sp.last) sp.last = e.date;
+        g.currencies.add(e.currency);
+        g.min = Math.min(g.min, e.amount); g.max = Math.max(g.max, e.amount);
+        g.cats[e.category] = (g.cats[e.category] || 0) + 1;
+      }
+      const ranked = Object.values(groups).map(g => {
+        const label = Object.entries(g.spell).sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last))[0][0];
+        const category = Object.entries(g.cats).sort((a, b) => b[1] - a[1])[0][0];
+        const currency = g.currencies.size === 1 ? [...g.currencies][0] : null;
+        return { label, count: g.count, gbp: g.gbp, native: g.native, currency, min: g.min, max: g.max, category, avgGBP: g.gbp / g.count };
+      }).sort((a, b) => b.count - a.count || b.gbp - a.gbp);
+      const regular = ranked.find(r => r.count >= 3 && (r.category === "Food" || r.category === "Nightlife")) || ranked.find(r => r.count >= 3) || null;
+      const top5 = ranked.filter(r => r.count >= 2).slice(0, 5);
+
+      // Biggest and thriftiest days (hotel stays spread over their nights, as in the Insights chart)
+      const series = dailySeries(L).days.filter(d => d.date <= scope.asOf);
+      const days = { series, big: null, why: [], mostly: false, thrifty: null };
+      const spendDays = series.filter(d => d.total > 0);
+      if (spendDays.length >= 4) {
+        const big = spendDays.reduce((a, b) => (b.total > a.total ? b : a));
+        const covering = REAL.filter(e => big.date >= e.date && big.date <= addDays(e.date, nightsOf(e) - 1))
+          .map(e => ({ e, share: gbpOf(e) / nightsOf(e) })).sort((a, b) => b.share - a.share);
+        Object.assign(days, { big, why: covering.slice(0, 2), mostly: covering.length > 0 && covering[0].share >= 0.5 * big.total });
+        if (!covering.length) days.big = null;   // a day that's all untracked cash has no story to tell
+        const byDay = {};
+        for (const e of REAL) {
+          if (e.category === "Accommodation" || e.date < scope.start || e.date > scope.asOf) continue;
+          (byDay[e.date] || (byDay[e.date] = [])).push(e);
+        }
+        const options = Object.entries(byDay).filter(([d, list]) => list.length >= 2 && d !== big.date && !(d === t.today && t.today <= t.end));
+        if (options.length) {
+          const [date, list] = options.map(([d, l]) => [d, l]).sort((a, b) => sumGBP(a[1]) - sumGBP(b[1]))[0];
+          days.thrifty = { date, items: list, total: sumGBP(list) };
+        }
+      }
+
+      // Christmas Day and New Year's Eve
+      const holidays = [];
+      for (let d = scope.start; d <= scope.asOf; d = addDays(d, 1)) {
+        const md = d.slice(5);
+        if (md !== "12-25" && md !== "12-31") continue;
+        const items = REAL.filter(e => e.date === d && e.category !== "Accommodation");
+        const sum = sumGBP(items);
+        if (!(items.length >= 2 || sum >= 5)) continue;
+        const one = new Set(items.map(e => e.currency)).size === 1 ? items[0].currency : null;
+        const counts = {};
+        items.forEach(e => { counts[e.country] = (counts[e.country] || 0) + 1; });
+        const here = countryOn(d);
+        const nights = items.filter(e => e.category === "Nightlife");
+        holidays.push({
+          date: d, kind: md === "12-25" ? "xmas" : "nye", total: sum,
+          place: here && here !== PRE_TRIP ? here : Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0],
+          local: one ? items.reduce((s, e) => s + e.amount, 0) : null, currency: one,
+          star: items.reduce((a, b) => (gbpOf(b) > gbpOf(a) ? b : a)),
+          night: { gbp: sumGBP(nights), local: one ? nights.reduce((s, e) => s + e.amount, 0) : null },
+          year: Number(d.slice(0, 4)) + 1
+        });
+      }
+
+      // Teamwork: who reached for the wallet (never who owes whom)
+      const pt = personTotals(ALL);
+      const times = { me: 0, partner: 0 };
+      ALL.forEach(e => { if (!e.isFee && (e.note || "").trim() !== UNTRACKED_NOTE && e.paidBy in times) times[e.paidBy]++; });
+      const allGBP = sumGBP(ALL);
+      const treats = ALL.filter(e => !e.isFee && hasSplit(e) && e.split.payerShare === 0);
+      // The same sum as calculateBalance(), but without any example entries
+      const balance = ALL.reduce((b, e) => b + (e.paidBy === "me" ? 1 : e.paidBy === "partner" ? -1 : 0) * gbpOf(e) * owedShare(e), 0) +
+        data.payments.filter(keep).reduce((b, p) => b + (p.from === "me" ? 1 : -1) * p.amount, 0);
+      const team = {
+        paid: pt.paid, paidSum: pt.paid.me + pt.paid.partner, times,
+        sharedPct: allGBP ? (sumGBP(ALL.filter(e => owedShare(e) > 0)) / allGBP) * 100 : 0,
+        treat: treats.length ? treats.reduce((a, b) => (gbpOf(b) > gbpOf(a) ? b : a)) : null,
+        square: mode === "final" && Math.abs(balance) < 0.005,
+        merged: mode === "preview" || Boolean(data.partnerDeviceId)
+      };
+
+      // The small print: a receipt of odd facts, first 7 that apply
+      const receipt = [];
+      const acc = REAL.filter(e => e.category === "Accommodation" && gbpOf(e) > 0 && e.date <= scope.asOf);
+      // Nights up to today only (a five-night stay that started yesterday counts two so far)
+      const nightsSlept = acc.reduce((s, e) => s + Math.min(nightsOf(e), mode === "sofar" ? daysBetween(e.date, scope.asOf) + 1 : Infinity), 0);
+      if (acc.length >= 2 && nightsSlept >= 3) {
+        const covered = mode === "final" && nightsSlept >= t.total - 1;
+        receipt.push({ label: "Nights in a bed", value: String(nightsSlept), sub: `${plural(acc.length, "stay")}${covered ? " · every night covered" : ""}` });
+        const fancy = acc.reduce((a, b) => (gbpOf(b) / nightsOf(b) > gbpOf(a) / nightsOf(a) ? b : a));
+        receipt.push({ label: "Average a night", value: gbp(sumGBP(acc) / nightsSlept), sub: `Fanciest: ${wrNote(fancy)}, ${cash(fancy.amount / nightsOf(fancy), fancy.currency)} a night` });
+      }
+      const atmMoves = MOVES.filter(m => m.kind === "atm"), exMoves = MOVES.filter(m => m.kind === "exchange");
+      const fees = [...atmMoves, ...exMoves].reduce((s, m) => s + moveFeeGBP(m), 0) + ITEMS.reduce((s, e) => s + cardFeeOf(e), 0);
+      if (fees >= 1) {
+        const rough = atmMoves.some(m => !(m.gbpCharged > 0)) || exMoves.some(m => m.rateSource !== "market");
+        const parts = [atmMoves.length ? plural(atmMoves.length, "cash machine") : "", exMoves.length ? plural(exMoves.length, "money change") : ""].filter(Boolean);
+        const k = regular ? Math.round(fees / regular.avgGBP) : 0;
+        receipt.push({ label: "Fees", value: (rough ? "≈ " : "") + gbp(fees), sub: [parts.join(" and "), k >= 3 ? `About ${k} × ${regular.label}.` : ""].filter(Boolean).join(". ") || "Card fees abroad" });
+      }
+      const withMethod = ITEMS.filter(e => e.method === "cash" || e.method === "card");
+      if (sumGBP(withMethod) > 0) {
+        const share = (sumGBP(withMethod.filter(e => e.method === "cash")) / sumGBP(withMethod)) * 100;
+        if (share >= 60 || share <= 25) receipt.push({ label: "Paid in cash", value: wrPct(share), sub: share >= 60 ? "Very Southeast Asia of you." : "Card people." });
+      }
+      const owls = REAL.filter(e => Number.isInteger(e.id) && e.id > 1.6e12 && !e.example).map(e => {
+        const at = new Date(e.id + 7 * 3600e3);   // Vietnam, Cambodia and Thailand are all 7 hours ahead of UTC
+        const day = `${at.getUTCFullYear()}-${String(at.getUTCMonth() + 1).padStart(2, "0")}-${String(at.getUTCDate()).padStart(2, "0")}`;
+        const h = at.getUTCHours();
+        return { e, h, m: at.getUTCMinutes(), late: (day === e.date && h >= 23) || (day === addDays(e.date, 1) && h < 5) };
+      }).filter(o => o.late);
+      if (owls.length) {
+        const o = owls.reduce((a, b) => ((b.h + 12) % 24 * 60 + b.m > (a.h + 12) % 24 * 60 + a.m ? b : a));
+        receipt.push({ label: "Latest entry", value: `${o.h % 12 || 12}:${String(o.m).padStart(2, "0")}${o.h < 12 ? "am" : "pm"}`, sub: `${wrNote(o.e)}. Respect.` });
+      }
+      const priced = REAL.filter(e => gbpOf(e) >= 0.01);
+      if (priced.length) {
+        const tiny = priced.reduce((a, b) => (gbpOf(b) < gbpOf(a) ? b : a));
+        if (gbpOf(tiny) < 0.5) receipt.push({ label: "Smallest spend", value: cash(tiny.amount, tiny.currency), sub: `${wrPence(gbpOf(tiny))} for ${wrNote(tiny).toLowerCase()}` });
+      }
+      const vanished = ITEMS.filter(e => (e.note || "").trim() === UNTRACKED_NOTE);
+      if (sumGBP(vanished) > 3) {
+        const byC = {};
+        vanished.forEach(e => { byC[e.currency] = (byC[e.currency] || 0) + e.amount; });
+        receipt.push({ label: "Vanished from wallets", value: Object.entries(byC).map(([c, a]) => cash(a, c)).join(" + "), sub: "Untracked cash. We'll never know." });
+      }
+      if (countries.filter(x => x.daysIn >= 2).length >= 2) {
+        receipt.push({ label: "A day in each", value: "", sub: countries.filter(x => x.daysIn >= 2).map(x => `${x.c} ${gbpWhole(x.gbp / x.daysIn)}`).join(" · ") });
+      }
+
+      // The verdict, against the trip budget (never counting "Before the trip", as on Home)
+      const budgetTotal = totalBudget();
+      const realDays = extra.realTripDays || t.total;
+      const scale = mode === "preview" ? scope.days / realDays : 1;
+      let diff = budgetTotal * scale - total;
+      if (mode === "sofar") diff = (budgetTotal * t.elapsed) / t.total - total;
+      const spentIn = groupTotals(L, "country");
+      const budget = {
+        total: budgetTotal, diff,
+        tier: Math.abs(diff) <= Math.max(10, 0.01 * budgetTotal) ? "on" : diff > 0 ? "under" : "over",
+        word: WR_MONEY[COUNTRY_CURRENCY[countries.length ? countries[countries.length - 1].c : COUNTRIES[0]]] || "penny",
+        rows: COUNTRIES.filter(c => data.budgets[c] > 0).map(c => ({ c, budget: data.budgets[c] * scale, spent: spentIn[c] || 0 }))
+      };
+
+      // Photos saved with your spending (never on the card: they're often receipts)
+      let photos = REAL.filter(e => e.hasPhoto && photoUrls[e.id] && e.date >= scope.start && e.date <= scope.asOf)
+        .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+      const photoCount = photos.length;
+      if (photos.length > 9) {
+        const pretty = photos.filter(e => e.category !== "Transport" && e.category !== "Other");
+        if (pretty.length >= 9) photos = pretty;
+        photos = Array.from({ length: 9 }, (_, i) => photos[Math.round((i * (photos.length - 1)) / 8)]);
+      }
+      const hero = photos.length >= 6 ? photos.reduce((a, b) => (gbpOf(b) > gbpOf(a) ? b : a)) : null;
+
+      return Object.freeze({
+        mode, scope, tripDays: t.total, elapsed: t.elapsed, realEnd: extra.realEnd || t.end, couple: coupleName(),
+        countries, total, perDay, preT: sumGBP(PRE),
+        outside: sumGBP(L.filter(e => e.date < t.start || e.date > t.end)),
+        ahead: mode === "sofar" ? sumGBP(L.filter(e => e.date > t.today)) : 0,
+        pendingN: ITEMS.filter(isPending).length + MOVES.filter(isPending).length,
+        pendingGBP: sumGBP(ITEMS.filter(isPending)),
+        count: ITEMS.length, currencies, millions: Math.floor(((byCur.VND && byCur.VND.native) || 0) / 1e6), atms: atmMoves.length,
+        cats, persona, personaGBP: personaCat ? personaCat.gbp : beds.gbp, personaN: personaCat ? ITEMS.filter(e => e.category === persona).length : 0,
+        bedsFirst: Boolean(personaCat) && cats[0] === beds && cats[1] === personaCat, bedsPct: beds.pct,
+        flavour: persona !== "Nightlife" && night.pct >= 12 ? night.pct : 0,
+        regular, top5, days, holidays, team, receipt, budget,
+        photos: photos.map(e => ({ e, thumb: photoUrls[e.id].thumb, full: photoUrls[e.id].full })),
+        hero: hero ? { e: hero, full: photoUrls[hero.id].full } : null, photoCount
+      });
+    }
+
+    // ---- The slides ----
+    // Each builder takes the model and returns null (skip) or { id, base, accent, dur, label, say, html, enter?, preload? }.
+    // "say" is the plain sentence read out by VoiceOver; every name and note in "html" goes through esc().
+    function wrFmt(n, fmt) {
+      if (fmt === "gbp") return gbpWhole(n);
+      if (fmt === "int") return Math.round(n).toLocaleString("en-GB");
+      if (fmt.startsWith("cash:")) return cash(n, fmt.slice(5));
+      return String(n);
+    }
+    // A big number that counts up as the slide plays (the real value is there for VoiceOver and holds the width)
+    function wrCount(to, fmt, cls = "wr-big", delay = 250) {
+      const text = wrFmt(to, fmt);
+      return `<span class="${cls} wr-count wr-fit"><span class="wr-ghost" aria-hidden="true">${esc(text)}</span>` +
+        `<span class="wr-num" aria-hidden="true" data-to="${to}" data-fmt="${fmt}" data-delay="${delay}">${esc(WR.RM.matches ? text : wrFmt(0, fmt))}</span>` +
+        `<span class="visually-hidden">${esc(text)}</span></span>`;
+    }
+    const wrIn = (d, html, tag = "p", cls = "wr-p") => `<${tag} class="${cls} wr-in" style="--d:${d}">${html}</${tag}>`;
+    const wrKicker = text => wrIn(0, esc(text), "p", "wr-kicker");
+    const wrHead = (d, html, cls = "wr-h") => `<h2 class="${cls} wr-in" style="--d:${d}" tabindex="-1">${html}</h2>`;
+
+    function wrCover(W) {
+      const k = W.countries.length;
+      const kicker = W.mode === "sofar" ? `The story so far · Day ${W.scope.days} of ${W.tripDays}`
+        : W.mode === "preview" ? (W.realEnd > toISO(new Date()) ? `Example data · yours unlocks ${niceDate(W.realEnd)}` : "Example data") : "Trip Wrapped";
+      const title = W.couple ? `${esc(W.couple[0])} &amp; ${esc(W.couple[1])}` : "Your trip";
+      const body = W.mode === "sofar" && W.scope.days < 4 ? `${W.scope.days} days in. ${plural(W.count, "expense")}.`
+        : W.scope.days < 4 ? `A ${W.scope.days}-day dash. ${plural(W.count, "expense")}.`
+        : k === 1 ? `${W.scope.days} days in ${W.countries[0].c}. ${plural(W.count, "expense")}.`
+        : `${W.scope.days} days. ${k} countries. ${plural(W.count, "expense")}.`;
+      const closer = W.regular && W.regular.count >= 5 ? `Spoiler: ${W.regular.label} features heavily.` : "Let's see where it all went.";
+      return {
+        id: "cover", base: "aurora", accent: "#A46BFF", dur: 5500, label: "Trip Wrapped",
+        say: `${W.couple ? W.couple.join(" and ") : "Your trip"}. ${body} ${closer}`,
+        html: wrKicker(kicker) + wrHead(1, title, "wr-title wr-fit") + wrRoute(W) + wrIn(5, body) + wrIn(6, esc(closer), "p", "wr-p wr-dim")
+      };
+    }
+    // An abstract route (no maps offline): a curve with a disc per country, spaced by the days you spent there
+    function wrRoute(W) {
+      const list = W.countries;
+      if (!list.length) return "";
+      const curve = f => {   // a point on the curve M20 90 C110 10, 210 130, 300 40
+        const u = 1 - f;
+        return [u * u * u * 20 + 3 * u * u * f * 110 + 3 * u * f * f * 210 + f * f * f * 300, u * u * u * 90 + 3 * u * u * f * 10 + 3 * u * f * f * 130 + f * f * f * 40];
+      };
+      const known = list.every(x => x.daysIn);
+      const sum = list.reduce((s, x) => s + (x.daysIn || 0), 0);
+      let before = 0;
+      const stops = list.map((x, i) => {
+        let f = list.length === 1 ? 0.5 : i / (list.length - 1);
+        // Spaced partly by days there, partly evenly, so a short stay never lands on top of the next one
+        if (known && list.length > 1 && sum) { f = 0.6 * f + 0.4 * ((before + x.daysIn / 2) / sum); before += x.daysIn; }
+        const [px, py] = curve(0.1 + f * 0.8);
+        const label = x.daysIn ? (i === 0 ? `${x.c} · ${plural(x.daysIn, "day")}` : `${x.c} · ${x.daysIn}`) : x.c;
+        return `<span class="wr-stop" style="left:${((px / 320) * 100).toFixed(1)}%;top:${((py / 120) * 100).toFixed(1)}%;--d:${i}"><b>${flag(x.c)}</b><small>${esc(label)}</small></span>`;
+      }).join("");
+      return `<div class="wr-route wr-in" style="--d:2" aria-hidden="true"><svg viewBox="0 0 320 120"><path class="wr-path" pathLength="1" d="M20 90 C110 10 210 130 300 40"/></svg>${stops}</div>`;
+    }
+
+    function wrTotal(W) {
+      const sofar = W.mode === "sofar";
+      const kicker = sofar ? "So far you've spent" : "Together you spent";
+      const body = W.mode === "preview" ? `in ${W.scope.days} days of example spending. ${gbpWhole(W.perDay)} a day.`
+        : sofar ? `${gbpWhole(W.perDay)} a day across ${plural(W.scope.days, "day")}.`
+        : `on the ground. That's ${gbpWhole(W.perDay)} a day for the two of you.`;
+      const notes = [];
+      if (W.preT > 1) notes.push(`Plus ${gbpWhole(W.preT)} paid before you left.`);
+      if (W.outside > 1) notes.push(`${gbpWhole(W.outside)} is dated outside your trip dates, so it isn't in the daily figure.`);
+      if (sofar && W.ahead > 1) notes.push(`Includes ${gbpWhole(W.ahead)} already booked for later nights.`);
+      if (W.pendingN > 0) notes.push(`${W.pendingN} ${W.pendingN === 1 ? "entry still uses an estimated" : "entries still use estimated"} exchange rate${W.pendingN === 1 ? "" : "s"}, so this may move by a few pence.`);
+      return {
+        id: "total", base: "aurora", accent: "#5E8BFF", dur: 6500, label: "The big number",
+        say: `${kicker} ${gbpWhole(W.total)} ${body}`,
+        html: wrKicker(kicker) + wrHead(1, wrCount(W.total, "gbp"), "wr-h wr-hero-num") + wrIn(11, body) +
+          notes.map((n, i) => wrIn(12 + i, n, "p", "wr-foot")).join("")
+      };
+    }
+
+    function wrLocal(W) {
+      const rows = W.currencies.filter(c => c.code !== "GBP");
+      if (!rows.some(c => c.n >= 3)) return null;
+      const lead = W.millions >= 1 ? W.currencies.find(c => c.code === "VND") : rows[0];
+      const n = W.currencies.length;
+      const head = W.millions >= 2 ? `You were dong millionaires. <em class="wr-pop">${W.millions} times over.</em>`
+        : W.millions === 1 ? "Dong millionaires. Just." : n === 1 ? `One currency: the ${WR_MONEY[lead.code] || lead.code}.` : `${wrCap(WR_WORDS[n] || String(n))} currencies, one trip.`;
+      const lines = W.currencies.map((c, i) => wrIn(5 + i, c.code === "GBP"
+        ? `<b>${gbpWhole(c.gbp)}</b> paid in pounds`
+        : `<b>${esc(cash(c.native, c.code))}</b> <span>≈ ${gbpWhole(c.gbp)}${c.code === "KHR" ? " in riel change" : ""}</span>`, "p", "wr-row"));
+      const extra = [n >= 3 ? `${wrCap(WR_WORDS[n] || String(n))} currencies. One very tired mental-maths muscle.` : "", W.atms ? `${plural(W.atms, "trip")} to the cash machine.` : ""].filter(Boolean);
+      return {
+        id: "local", base: "aurora", accent: "#1BAF7A", dur: 6500, label: "In local money",
+        say: `In local money: ${cash(lead.native, lead.code)}. ${head.replace(/<[^>]+>/g, "")}`,
+        html: wrKicker("In local money") + `<div class="wr-in" style="--d:1">${wrCount(lead.native, "cash:" + lead.code, "wr-big wr-big-cash")}</div>` +
+          wrHead(3, head) + `<div class="wr-rows">${lines.join("")}</div>` + extra.map((x, i) => wrIn(9 + i, x, "p", "wr-foot")).join("")
+      };
+    }
+
+    function wrPersona(W) {
+      const used = W.cats.filter(c => c.gbp >= 1);
+      if (W.count < 8 || used.length < 2) return null;
+      const where = W.countries.length === 1 ? W.countries[0].c : `${WR_WORDS[W.countries.length] || W.countries.length} countries`;
+      const pc = W.cats.find(c => c.name === W.persona) || { pct: W.bedsPct, gbp: W.personaGBP };
+      const lines = {
+        Food: `You ate your way across ${where}: ${gbpWhole(pc.gbp)} over ${W.personaN} food entries.`,
+        Activities: `Temples, tours, tickets: you said yes. ${gbpWhole(pc.gbp)} on ${W.personaN} ${W.personaN === 1 ? "activity" : "activities"}.`,
+        Transport: `${plural(W.personaN, "journey")} logged. Your backs deserve a medal.`,
+        Nightlife: `Sunsets were just the warm-up. ${gbpWhole(pc.gbp)} on nights out.`,
+        Nesters: "A good bed was non-negotiable."
+      };
+      const lead = W.persona === "Nesters" ? `Beds were ${wrPct(W.bedsPct)} of everything.`
+        : `${W.persona} was ${wrPct(pc.pct)} of everything${W.bedsFirst ? ", second only to beds" : ""}.`;
+      const max = Math.max(...used.map(c => c.gbp));
+      const bars = used.slice(0, 5).map((c, i) => `
+        <div class="wr-hrow" style="--d:${i}">
+          <span class="wr-ico" style="--c:${WR_CAT[c.name] || WR_CAT.Other}">${svgIcon(c.name)}</span>
+          <span class="wr-hname">${esc(c.name)}</span><span class="wr-hval">${gbpWhole(c.gbp)} · ${wrPct(c.pct)}</span>
+          <span class="wr-htrack"><i style="--w:${(c.gbp / max).toFixed(3)};--c:${WR_CAT[c.name] || WR_CAT.Other}"></i></span>
+        </div>`).join("");
+      const label = used.slice(0, 5).map(c => `${c.name} ${wrPct(c.pct)}`).join(", ");
+      return {
+        id: "persona", base: "night", accent: WR_CAT[W.persona === "Nesters" ? "Accommodation" : W.persona], dur: 7500, label: "Your travel personality",
+        say: `Your travel personality: ${WR_PERSONA[W.persona]}. ${lead} ${lines[W.persona]}`,
+        html: wrKicker("Your travel personality") + wrIn(1, esc(lead)) +
+          `<div class="wr-hbars wr-in" style="--d:2" role="img" aria-label="Spending by category: ${esc(label)}">${bars}</div>` +
+          wrHead(8, esc(WR_PERSONA[W.persona]), "wr-word wr-pop wr-fit") + wrIn(9, esc(lines[W.persona])) +
+          (W.flavour ? wrIn(10, `…with a healthy night-shift streak (${wrPct(W.flavour)}).`, "p", "wr-p wr-dim") : "")
+      };
+    }
+
+    function wrRegular(W) {
+      const r = W.regular;
+      if (!r) return null;
+      const joy = r.category === "Food" || r.category === "Nightlife";
+      const body = r.currency
+        ? `${r.count} times. ${cash(r.native, r.currency)} all in${joy ? `: ${gbpTidy(r.gbp)} of pure joy.` : ` (${gbpTidy(r.gbp)}).`}`
+        : `${r.count} times. ${gbpTidy(r.gbp)} all in.`;
+      const spread = r.currency && r.min > 0 && r.max >= 2 * r.min ? `Cheapest ${cash(r.min, r.currency)}. Dearest ${cash(r.max, r.currency)}. Someone paid tourist prices.` : "";
+      const list = W.top5.length >= 3 ? `<ol class="wr-top5">${W.top5.map((x, i) => `
+        <li class="wr-in" style="--d:${8 - i}"><b>${i + 1}</b><span>${esc(x.label)}</span><em>×${x.count}</em></li>`).join("")}</ol>` : "";
+      return {
+        id: "regular", base: "aurora", accent: "#E87BA4", dur: 7500, label: "Your regular",
+        say: `Your regular: ${r.label}. ${body} ${spread}`,
+        html: wrKicker("Your regular") + wrHead(1, esc(r.label), "wr-word wr-fit") + wrIn(2, esc(body)) + (spread ? wrIn(3, esc(spread), "p", "wr-p wr-dim") : "") + list
+      };
+    }
+
+    function wrBigDay(W) {
+      const D = W.days;
+      if (!D.big) return null;
+      const each = x => `${wrNote(x.e)}${x.e.currency && nightsOf(x.e) === 1 ? ` (${cash(x.e.amount, x.e.currency)})` : ""}`;
+      const body = D.mostly ? `${gbpWhole(D.big.total)} in a single day. Mostly ${each(D.why[0])}.`
+        : `${gbpWhole(D.big.total)} in a single day: ${D.why.map(x => wrNote(x.e)).join(" and ")}.`;
+      let thrifty = "";
+      if (D.thrifty) {
+        const items = D.thrifty.items;
+        const one = new Set(items.map(e => e.currency)).size === 1 ? items[0].currency : null;
+        const money = one && one !== "GBP" ? `${cash(items.reduce((s, e) => s + e.amount, 0), one)} (${gbp(D.thrifty.total)})` : gbp(D.thrifty.total);
+        const names = items.slice().sort((a, b) => gbpOf(b) - gbpOf(a)).slice(0, 3).map(e => wrNote(e).toLowerCase());
+        thrifty = `Your thriftiest: ${niceDate(D.thrifty.date)}. ${money}, not counting the bed: ${names.join(", ")}. Heroes.`;
+      }
+      return {
+        id: "bigday", base: "aurora", accent: "#5B8CFF", dur: 7500, label: "Your biggest day",
+        say: `Your biggest day: ${niceDate(D.big.date)}. ${body} ${thrifty}`,
+        html: wrKicker("Your biggest day") + wrHead(1, esc(niceDate(D.big.date)), "wr-word wr-fit") + wrDayChart(D) + wrIn(4, esc(body)) +
+          (thrifty ? wrIn(5, esc(thrifty), "p", "wr-p wr-dim") : "") + wrIn(6, "Hotels are spread across the nights you stayed.", "p", "wr-foot")
+      };
+    }
+    function wrDayChart(D) {
+      const s = D.series, n = s.length;
+      const max = Math.max(...s.map(d => d.total), 1);
+      const Wd = 320, H = 120, gap = n > 20 ? 2 : 4, bw = Math.max(2, (Wd - gap * (n - 1)) / n);
+      let pill = "";
+      const bars = s.map((d, i) => {
+        const h = Math.max(2, (d.total / max) * (H - 26));
+        const x = i * (bw + gap), y = H - h;
+        const cls = d.date === D.big.date ? " big" : D.thrifty && d.date === D.thrifty.date ? " thrifty" : "";
+        if (cls === " big") pill = `<text class="wr-chart-pill" x="${Math.min(Wd - 20, Math.max(20, x + bw / 2))}" y="${Math.max(12, y - 8)}" text-anchor="middle">${esc(gbpWhole(d.total))}</text>`;
+        return `<path class="wr-bar${cls}" style="--t:${Math.min(i * 15, 400)}ms" d="${barPath(x, y, bw, h)}"/>`;
+      }).join("");
+      const label = `Daily spending: biggest ${niceDate(D.big.date)}, ${gbpWhole(D.big.total)}${D.thrifty ? `; thriftiest ${niceDate(D.thrifty.date)}, ${gbp(D.thrifty.total)}` : ""}.`;
+      return `<svg class="wr-days wr-in" style="--d:2" viewBox="0 0 ${Wd} ${H}" role="img" aria-label="${esc(label)}">${bars}${pill}</svg>`;
+    }
+
+    function wrHolidays(W) {
+      if (!W.holidays.length) return null;
+      const says = [];
+      const cards = W.holidays.map((h, i) => {
+        const money = (local, g) => (local != null && h.currency && h.currency !== "GBP" ? `${cash(local, h.currency)}` : gbpWhole(g));
+        let line = `${money(h.local, h.total)} on the day${h.local != null && h.currency !== "GBP" ? ` (${gbpWhole(h.total)})` : ""}.`;
+        if (h.kind === "xmas") line += ` Star of the show: ${wrNote(h.star)}, ${cash(h.star.amount, h.star.currency)}.`;
+        else line += `${h.night.gbp > 0 ? ` ${money(h.night.local, h.night.gbp)} of it on nightlife.` : ""} Happy ${h.year}.`;
+        const title = `${h.kind === "xmas" ? "Christmas Day" : "New Year's Eve"} · ${h.place}`;
+        says.push(`${title}. ${line}`);
+        return `<div class="wr-postcard wr-in${h.kind === "nye" ? " nye" : ""}" style="--d:${2 + i * 3};--tilt:${i ? 2 : -2}deg">
+          <b>${flag(h.place)} ${esc(title)}</b><span>${esc(line)}</span>${h.kind === "nye" ? '<i class="wr-sparkles" aria-hidden="true"></i>' : ""}</div>`;
+      }).join("");
+      return {
+        id: "holidays", base: "night", accent: "#FAB219", dur: 7000, label: "The holidays", say: `The holidays. ${says.join(" ")}`,
+        html: wrKicker("The holidays") + wrHead(1, W.holidays.length > 1 ? "Christmas and New Year, on the road." : W.holidays[0].kind === "xmas" ? "Christmas, on the road." : "New Year, on the road.") + `<div class="wr-cards">${cards}</div>`
+      };
+    }
+
+    function wrTeam(W) {
+      const T = W.team;
+      if (T.paidSum < 20 || ((T.paid.me <= 0 || T.paid.partner <= 0) && !T.merged)) return null;
+      const order = W.couple && data.names.me.trim() !== W.couple[0] ? ["partner", "me"] : ["me", "partner"];
+      const [A, B] = order;
+      const pctOf = who => Math.round((T.paid[who] / T.paidSum) * 100);
+      const nameOf = wrName;
+      const top = pctOf(A) >= pctOf(B) ? A : B;
+      const head = pctOf(top) >= 80 ? `${wrCap(nameOf(top))} carried the wallet this trip: ${pctOf(top)}% of the paying. A well-oiled system.`
+        : `${wrCap(nameOf(A))} paid ${pctOf(A)}%, ${nameOf(B)} ${100 - pctOf(A)}%.`;
+      const lines = [];
+      if (pctOf(top) < 80 && pctOf(A) >= 45 && pctOf(A) <= 55) lines.push("Practically 50/50. Annoyingly well matched.");
+      lines.push(`${wrCap(nameOf(A))} reached for the wallet ${plural(T.times[A], "time")}, ${nameOf(B)} ${T.times[B]}.`);
+      lines.push(`${wrPct(T.sharedPct)} of the money went on things you shared.`);
+      if (T.treat) {
+        const giver = T.treat.paidBy, getter = giver === "me" ? "partner" : "me";
+        lines.push(`${wrCap(wrPossessive(giver))} treat: ${wrNote(T.treat)} for ${nameOf(getter)} (${cash(T.treat.amount, T.treat.currency)}).`);
+      }
+      if (T.square) lines.push("And you finished all square.");
+      const initial = who => esc((data.names[who].trim()[0] || (who === "me" ? "M" : "P")).toUpperCase());
+      const split = `<div class="wr-split wr-in" style="--d:2" aria-hidden="true">
+          <span class="wr-av a">${initial(A)}</span>
+          <div class="wr-splitbar"><i class="a" style="--w:${(pctOf(A) / 100).toFixed(3)}"></i><i class="b" style="--w:${((100 - pctOf(A)) / 100).toFixed(3)}"></i></div>
+          <span class="wr-av b">${initial(B)}</span></div>`;
+      return {
+        id: "team", base: "aurora", accent: "#4FC3C8", dur: 7000, label: "Teamwork", say: `Teamwork. ${head} ${lines.join(" ")}`,
+        html: wrKicker("Teamwork") + wrHead(1, esc(head)) + split + lines.map((l, i) => wrIn(4 + i, esc(l))).join("") +
+          (W.preT > 0 ? wrIn(9, "Door to door, including what you paid before the trip.", "p", "wr-foot") : "")
+      };
+    }
+
+    function wrReceipt(W) {
+      const rows = W.receipt.slice(0, 7);
+      if (rows.length < 3) return null;
+      const year = d => d.slice(0, 4);
+      const header = `Trip Budget · ${niceDate(W.scope.start, "short")} ${year(W.scope.start)} – ${niceDate(W.scope.asOf, "short")} ${year(W.scope.asOf)}`;
+      const lines = rows.map((r, i) => `
+        <li class="wr-print" style="--d:${i}"><span class="wr-line"><span>${esc(r.label)}</span><i></i><b>${esc(r.value)}</b></span>${r.sub ? `<small>${esc(r.sub)}</small>` : ""}</li>`).join("");
+      return {
+        id: "receipt", base: "night", accent: "#2A78D6", dur: 9000, label: "The small print",
+        say: `The small print. ${rows.map(r => `${r.label}: ${r.value}. ${r.sub}`).join(" ")} Total ${gbp(W.total)}.`,
+        html: wrKicker("The small print") + `<h2 class="visually-hidden" tabindex="-1">The small print</h2>
+          <div class="wr-receipt wr-in" style="--d:1"><p class="wr-rhead">${esc(header.toUpperCase())}</p><ul>${lines}</ul>
+            <p class="wr-total wr-print" style="--d:${rows.length}"><span>TOTAL</span><b>${esc(gbp(W.total))}</b></p>
+            <p class="wr-rfoot">Thank you for travelling. No refunds.</p></div>`
+      };
+    }
+
+    function wrVerdict(W) {
+      const B = W.budget;
+      if (!B.total) return null;
+      const amt = gbpWhole(Math.abs(B.diff));
+      let big, head, sub = "";
+      if (W.mode === "sofar") {
+        big = `${amt} ${B.diff >= 0 ? "under" : "over"}`;
+        head = `Day ${W.elapsed} of ${W.tripDays}: ${amt} ${B.diff >= 0 ? "under" : "over"} pace.`;
+      } else if (B.tier === "on") { big = "Bang on"; head = "Bang on budget. Suspiciously good."; }
+      else if (B.tier === "under") { big = `${amt} under`; head = `${amt} under budget. Somebody frame this.`; }
+      else { big = `${amt} over`; head = `${amt} over budget. Worth every ${B.word}.`; sub = `About ${gbpWhole(Math.abs(B.diff) / W.scope.days)} a day.`; }
+      const max = Math.max(...B.rows.map(r => Math.max(r.budget, r.spent)), 1);
+      const rows = B.rows.map((r, i) => {
+        const left = r.budget - r.spent;
+        return `<div class="wr-vrow wr-in" style="--d:${4 + i}"><span class="wr-vname">${flag(r.c)} ${esc(r.c)}</span><span class="wr-vleft">${left >= 0 ? `${gbpWhole(left)} left` : `${gbpWhole(-left)} over`}</span>
+          <span class="wr-vtrack"><i class="spent" style="--w:${(Math.min(r.spent, r.budget) / max).toFixed(3)}"></i>${r.spent > r.budget ? `<i class="over" style="left:${((r.budget / max) * 100).toFixed(1)}%;--w:${((r.spent - r.budget) / max).toFixed(3)}"></i>` : ""}<b style="left:${((r.budget / max) * 100).toFixed(1)}%"></b></span></div>`;
+      }).join("");
+      return {
+        id: "verdict", base: "aurora", accent: B.diff < 0 && B.tier !== "on" ? "#FAB219" : "#5BD45B", dur: 7000, label: "The verdict",
+        say: `The verdict. ${head} ${sub}`,
+        html: wrKicker("The verdict") + `<div class="wr-vrows">${rows}</div>` + wrIn(8, `<span class="wr-big wr-fit">${esc(big)}</span>`, "div", "wr-in-big") +
+          wrHead(9, esc(head)) + (sub ? wrIn(10, esc(sub), "p", "wr-p wr-dim") : "") +
+          (W.preT > 0 ? wrIn(11, "Flights and anything else paid before the trip aren't in the trip budget.", "p", "wr-foot") : "")
+      };
+    }
+
+    function wrPhotos(W) {
+      const P = W.photos;
+      if (P.length < 3) return null;
+      const alt = x => `${wrNote(x.e)}, ${cash(x.e.amount, x.e.currency)}`;
+      const tiles = P.map((x, i) => `<img class="wr-tile" style="--d:${i}" src="${x.thumb}" alt="${esc(alt(x))}" draggable="false">`).join("");
+      const hero = W.hero ? `<figure class="wr-photo-hero"><img src="${W.hero.full}" alt="" draggable="false">
+          <figcaption>${flag(W.hero.e.country)} ${esc(wrNote(W.hero.e))} · ${esc(cash(W.hero.e.amount, W.hero.e.currency))} · ${esc(niceDate(W.hero.e.date))}</figcaption></figure>` : "";
+      return {
+        id: "photos", base: "night", accent: "#E87BA4", dur: 8000, label: "Snapshots",
+        say: `Snapshots. ${plural(W.photoCount, "photo")} saved with your spending.`,
+        preload: () => Promise.allSettled([...P.map(x => x.thumb), ...(W.hero ? [W.hero.full] : [])].map(src => { const img = new Image(); img.src = src; return img.decode(); })),
+        html: wrKicker("Snapshots") + wrHead(1, `${plural(W.photoCount, "photo")} saved with your spending.`) + wrIn(2, "A few favourites:", "p", "wr-p wr-dim") +
+          `<div class="wr-grid${P.length < 6 ? " two" : ""}" role="group" aria-label="Photos">${tiles}${hero}</div>`
+      };
+    }
+
+    function wrFinal(W) {
+      const prefs = wrPrefs();
+      const k = W.countries.length;
+      const head = `${W.couple ? `${W.couple[0]} & ${W.couple[1]}` : "Your trip"}. ${plural(W.scope.days, "day")}${k ? `, ${k === 1 ? "one country" : `${k} countries`}` : ""}.`;
+      const regularChip = wrCardRegular(W) ? `<button type="button" class="wr-chip" data-wr-toggle="regular" aria-pressed="${prefs.regular}">Our regular</button>` : "";
+      return {
+        id: "card", base: "aurora", accent: "#A46BFF", dur: Infinity, label: "That's a wrap",
+        say: `${W.mode === "sofar" ? "To be continued." : "That's a wrap."} ${head} Your trip card is ready to share.`,
+        html: wrKicker(W.mode === "sofar" ? "To be continued…" : "That's a wrap") + wrHead(1, esc(head), "wr-h wr-h-small") + `
+          <div class="wr-cardbox wr-in" style="--d:2"><img class="wr-cardimg" id="wr-cardimg" alt="Your Trip Wrapped card" hidden><div class="wr-cardwait" id="wr-cardwait">Making your card…</div></div>
+          <div class="wr-chips wr-in" style="--d:3"><button type="button" class="wr-chip" data-wr-toggle="amounts" aria-pressed="${prefs.amounts}">£ amounts</button>${regularChip}</div>
+          <div class="wr-actions wr-in" style="--d:4">
+            <button type="button" class="wr-btn primary" id="wr-share" disabled>Preparing…</button>
+            <button type="button" class="wr-btn" id="wr-replay">Replay</button>
+            <button type="button" class="wr-btn" id="wr-done">Done</button>
+          </div>
+          <p class="wr-foot wr-in" style="--d:5">Or press and hold the card to save it to Photos.</p>`,
+        enter: el => {
+          const prefs = wrPrefs();
+          el.querySelectorAll("[data-wr-toggle]").forEach(b => b.setAttribute("aria-pressed", String(prefs[b.dataset.wrToggle] !== false)));
+          wrPrepareCard(0);
+          if (soundsOn()) playSound("square");
+        }
+      };
+    }
+    const WR_BUILDERS = [wrCover, wrTotal, wrLocal, wrPersona, wrRegular, wrBigDay, wrHolidays, wrTeam, wrReceipt, wrVerdict, wrPhotos, wrFinal];
+
+    // ---- The player ----
+    async function openWrapped(opener) {
+      if (WR.open) return;
+      WR.open = true;
+      let mode = wrapMode();
+      if (!wrapReady(mode)) mode = "preview";
+      await Promise.race([photosReady, wrSleep(1000)]);   // photos may still be loading on a cold start
+      if (!WR.open) return;   // closed while waiting
+      WR.swallow = false;
+      const realTripDays = tripProgress().total, realEnd = data.trip.end;
+      const build = () => wrapModel(mode, { realTripDays, realEnd });
+      WR.W = mode === "preview" ? withExampleData(build) : build();
+      WR.slides = WR_BUILDERS.map(b => b(WR.W)).filter(Boolean);
+      WR.opener = opener && opener.focus ? opener : document.activeElement;
+      WR.manual = false;
+      WR.pausedBy.clear();
+      $("wr-bars").innerHTML = WR.slides.map(() => '<span class="wr-seg"><i></i></span>').join("");
+      $("wr-badge").hidden = mode !== "preview";
+      // The page behind can't be reached, the Home colours stop moving, and the status bar matches the story
+      WR.saved = {
+        inert: ["topbar", "main", "tabbar", "sheet", "viewer"].map(id => [$(id), $(id).inert]),
+        theme: [...document.querySelectorAll('meta[name="theme-color"]')].map(m => [m, m.content])
+      };
+      WR.saved.inert.forEach(([el]) => { el.inert = true; });
+      WR.saved.theme.forEach(([m]) => { m.content = "#1D33F0"; });
+      document.documentElement.classList.add("wr-open");
+      const root = $("wrapped");
+      root.classList.remove("closing", "paused", "held", "dragging");
+      $("wr-frame").style.transform = "";
+      root.hidden = false;
+      wrGo(0, 1);
+    }
+
+    function closeWrapped() {
+      if (!WR.open) return;
+      WR.open = false;
+      WR.cardGen = (WR.cardGen || 0) + 1;
+      if (!WR.saved) return;   // closed before it had finished opening
+      if (WR.i === WR.slides.length - 1 && WR.W.mode === "final") { const p = wrPrefs(); p.seen = true; wrSavePrefs(p); }
+      if (WR.anim) { WR.anim.cancel(); WR.anim = null; }
+      cancelAnimationFrame(WR.raf);
+      clearTimeout(WR.cardTimer);
+      if (WR.card && WR.card.url) URL.revokeObjectURL(WR.card.url);
+      WR.card = null;
+      WR.saved.inert.forEach(([el, was]) => { el.inert = was; });
+      WR.saved.theme.forEach(([m, content]) => { m.content = content; });
+      WR.saved = null;
+      document.documentElement.classList.remove("wr-open");
+      const root = $("wrapped");
+      root.classList.add("closing");
+      setTimeout(() => { if (!WR.open) { root.hidden = true; root.classList.remove("closing"); $("wr-stage").innerHTML = ""; } }, WR.RM.matches ? 0 : 220);
+      if (WR.opener && document.contains(WR.opener)) WR.opener.focus({ preventScroll: true });
+      renderWrapEntry();
+    }
+
+    // Show slide i: crossfade the scene, mount the slide, start its clock, and get the next one's photos ready
+    function wrGo(i, dir = 1) {
+      if (!WR.open) return;
+      if (i < 0) i = 0;
+      if (i >= WR.slides.length) { closeWrapped(); return; }
+      if (WR.anim) { WR.anim.cancel(); WR.anim = null; }
+      // Moving to another slide means "carry on": a Pause-button pause would leave the new slide frozen before it appears
+      if (WR.pausedBy.has("button")) wrResume("button");
+      WR.i = i;
+      WR.mountedAt = performance.now();
+      const token = WR.goSeq = (WR.goSeq || 0) + 1;
+      const slide = WR.slides[i];
+      const frame = $("wr-frame"), stage = $("wr-stage");
+      frame.dataset.base = slide.base;
+      frame.dataset.last = String(i === WR.slides.length - 1);
+      const blobs = frame.querySelectorAll(".wr-blob");
+      const show = blobs[0].classList.contains("on") ? blobs[1] : blobs[0];
+      show.style.backgroundColor = slide.accent;
+      blobs.forEach(b => b.classList.toggle("on", b === show));
+      // The old slide fades out and goes; never more than two in the page
+      [...stage.children].forEach(old => { if (old.classList.contains("leaving")) old.remove(); else { old.classList.add("leaving"); setTimeout(() => old.remove(), WR.RM.matches ? 0 : 180); } });
+      const el = document.createElement("section");
+      el.className = "wr-slide";
+      el.dataset.dir = dir;
+      el.setAttribute("aria-roledescription", "slide");
+      el.setAttribute("aria-label", `${i + 1} of ${WR.slides.length}: ${slide.label}`);
+      el.innerHTML = slide.html;
+      stage.appendChild(el);
+      el.querySelectorAll(".wr-fit").forEach(wrFitText);
+      // The bars: done, this one, still to come
+      [...$("wr-bars").children].forEach((seg, k) => {
+        const fill = seg.firstElementChild;
+        fill.getAnimations().forEach(a => a.cancel());
+        fill.style.transform = k < i ? "scaleX(1)" : "scaleX(0)";
+      });
+      if (WR.manual) el.querySelector("h2") && el.querySelector("h2").focus({ preventScroll: true });
+      else $("wr-live").textContent = `${i + 1} of ${WR.slides.length}. ${slide.say}`;
+      if (slide.enter) slide.enter(el);
+      const next = WR.slides[i + 1];
+      const ready = slide.preload ? Promise.race([slide.preload(), wrSleep(800)]) : Promise.resolve();
+      ready.then(() => {
+        if (!WR.open || WR.goSeq !== token) return;   // only the latest visit to this slide starts a clock
+        wrStartClock(slide.dur);
+        if (next && next.preload) next.preload();
+      });
+    }
+
+    // The slide's clock is the progress bar's own animation (Web Animations, which Reduce Motion doesn't stop),
+    // so pausing the bar pauses everything, and count-ups read its time
+    function wrStartClock(dur) {
+      if (WR.anim) { WR.anim.cancel(); WR.anim = null; }
+      const fill = $("wr-bars").children[WR.i].firstElementChild;
+      WR.slideStart = performance.now();
+      if (!isFinite(dur) || WR.manual) {
+        fill.style.transform = "scaleX(1)";
+        WR.anim = null;
+      } else {
+        fill.style.transform = "";
+        WR.anim = fill.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: dur, easing: "linear", fill: "forwards" });
+        WR.anim.onfinish = () => { if (WR.open && !WR.manual) wrGo(WR.i + 1, 1); };
+        if (WR.pausedBy.size) WR.anim.pause();
+      }
+      cancelAnimationFrame(WR.raf);
+      WR.raf = requestAnimationFrame(wrTick);
+    }
+    function wrClock() { return WR.anim && WR.anim.currentTime != null ? WR.anim.currentTime : performance.now() - WR.slideStart; }
+
+    // Count-ups: ease out to the real value, driven by the slide clock (so they pause with it)
+    function wrTick() {
+      const t = wrClock();
+      const nums = $("wr-stage").querySelectorAll(".wr-slide:not(.leaving) .wr-num");
+      let busy = false;
+      nums.forEach(el => {
+        const to = Number(el.dataset.to), fmt = el.dataset.fmt;
+        const p = WR.RM.matches ? 1 : Math.min(1, Math.max(0, (t - Number(el.dataset.delay || 0)) / 1100));
+        const eased = p >= 1 ? 1 : 1 - Math.pow(2, -10 * p);
+        let value = to * eased;
+        if (p < 1 && fmt === "cash:VND") value = Math.round(value / 10000) * 10000;
+        el.textContent = wrFmt(p >= 1 ? to : value, fmt);
+        if (p < 1) busy = true;
+      });
+      if (busy && WR.open) WR.raf = requestAnimationFrame(wrTick);
+    }
+
+    function wrPause(reason) {
+      WR.pausedBy.add(reason);
+      if (WR.anim) WR.anim.pause();
+      $("wrapped").classList.add("paused");
+      $("wr-pause").setAttribute("aria-pressed", String(WR.pausedBy.has("button")));
+      $("wr-pause").setAttribute("aria-label", WR.pausedBy.has("button") ? "Play" : "Pause");
+    }
+    function wrResume(reason) {
+      WR.pausedBy.delete(reason);
+      $("wr-pause").setAttribute("aria-pressed", String(WR.pausedBy.has("button")));
+      $("wr-pause").setAttribute("aria-label", WR.pausedBy.has("button") ? "Play" : "Pause");
+      if (WR.pausedBy.size) return;
+      $("wrapped").classList.remove("paused");
+      if (WR.anim) WR.anim.play();
+      cancelAnimationFrame(WR.raf);
+      WR.raf = requestAnimationFrame(wrTick);
+    }
+    // VoiceOver, Switch Control or a keyboard: stop auto-play for the rest of the story, move focus instead
+    function wrSetManual() {
+      if (WR.manual) return;
+      WR.manual = true;
+      if (WR.anim) { WR.anim.cancel(); WR.anim = null; }
+      const fill = $("wr-bars").children[WR.i].firstElementChild;
+      fill.style.transform = "scaleX(1)";
+      $("wr-live").textContent = "Auto-play off. Use Next slide to continue.";
+    }
+
+    // Gestures on the story: tap (the zones' own clicks), hold to pause, swipe down to close
+    function wrPointerDown(event) {
+      if (!event.isPrimary) return;   // a second finger never takes over the first one's hold or drag
+      WR.swallow = false;             // any click from the last gesture has already arrived
+      if (!WR.open || event.button > 0 || event.target.closest(".wr-chrome, .wr-actions, .wr-chips, .wr-cardimg")) return;
+      WR.ptr = { id: event.pointerId, x: event.clientX, y: event.clientY, t: performance.now(), axis: null, held: false, dy: 0 };
+      WR.ptr.timer = setTimeout(() => {
+        if (!WR.ptr || WR.ptr.axis) return;
+        WR.ptr.held = true;
+        wrPause("hold");
+        $("wrapped").classList.add("held");
+      }, 200);
+    }
+    function wrPointerMove(event) {
+      const p = WR.ptr;
+      if (!p || event.pointerId !== p.id) return;
+      const dx = event.clientX - p.x, dy = event.clientY - p.y;
+      if (!p.axis && Math.hypot(dx, dy) > 10) {
+        p.axis = Math.abs(dy) > Math.abs(dx) && dy > 0 && !p.held ? "down" : "other";
+        clearTimeout(p.timer);
+        if (p.axis === "down") {
+          try { $("wr-frame").setPointerCapture(p.id); } catch (err) { /* fine */ }
+          wrPause("drag");
+          $("wrapped").classList.add("dragging");
+        }
+      }
+      if (p.axis === "down") {
+        p.dy = Math.max(0, dy);
+        $("wr-frame").style.transform = `translateY(${p.dy}px) scale(${1 - p.dy / 3000})`;
+        $("wrapped").style.setProperty("--wr-dim", String(Math.max(0, 1 - p.dy / 400)));
+      }
+    }
+    function wrPointerUp(event) {
+      const p = WR.ptr;
+      if (!p || event.pointerId !== p.id) return;
+      clearTimeout(p.timer);
+      WR.ptr = null;
+      if (p.held) { wrResume("hold"); $("wrapped").classList.remove("held"); WR.swallow = true; return; }
+      if (p.axis === "down") {
+        WR.swallow = true;
+        const speed = p.dy / Math.max(1, performance.now() - p.t);
+        $("wrapped").classList.remove("dragging");
+        if (p.dy > 120 || (speed > 0.6 && p.dy > 20)) { closeWrapped(); return; }
+        $("wr-frame").style.transform = "";
+        $("wrapped").style.removeProperty("--wr-dim");
+        wrResume("drag");
+      } else if (p.axis === "other") WR.swallow = true;
+    }
+    function wrZone(dir, event) {
+      if (WR.swallow && event.detail !== 0) { WR.swallow = false; return; }
+      if (event.detail === 0) wrSetManual();   // a keyboard or VoiceOver tap, not a finger
+      if (dir < 0 && WR.i === 0) wrGo(0, 1);
+      else wrGo(WR.i + dir, dir);
+    }
+
+    // The trip card, as a PNG (shown as the exact image that gets shared)
+    function wrCardRegular(W) {
+      const r = W.regular;
+      return r && (r.category === "Food" || r.category === "Nightlife") && r.label.length <= 24 ? r : null;
+    }
+    function wrPrepareCard(delay = 150) {
+      clearTimeout(WR.cardTimer);
+      const share = $("wr-share");
+      if (share) { share.disabled = true; share.textContent = "Preparing…"; }
+      const gen = WR.cardGen = (WR.cardGen || 0) + 1;   // a newer draw (or closing) makes this one stale
+      WR.cardTimer = setTimeout(async () => {
+        const prefs = wrPrefs();
+        const key = `${prefs.amounts}|${prefs.regular}`;
+        try {
+          const blob = await drawWrapCard(WR.W, prefs);
+          if (!WR.open || gen !== WR.cardGen) return;
+          if (WR.card && WR.card.url) URL.revokeObjectURL(WR.card.url);
+          WR.card = { blob, url: URL.createObjectURL(blob), key };
+          const img = $("wr-cardimg");
+          if (img) { img.src = WR.card.url; img.hidden = false; $("wr-cardwait").hidden = true; }
+          if ($("wr-share")) { $("wr-share").disabled = false; $("wr-share").textContent = "Share"; }
+        } catch (err) {
+          if (gen !== WR.cardGen) return;
+          console.warn("Couldn't draw the trip card", err);
+          if ($("wr-cardwait")) $("wr-cardwait").textContent = "The card couldn't be made on this phone.";
+          if ($("wr-share")) $("wr-share").hidden = true;
+        }
+      }, delay);
+    }
+    // Straight from the tap to the share sheet (iPhones only allow it right after a tap), so nothing is awaited first
+    function wrShare() {
+      const prefs = wrPrefs();
+      if (!WR.card || WR.card.key !== `${prefs.amounts}|${prefs.regular}` || WR.sharing) return;   // only ever the card you can see
+      WR.sharing = true;
+      setTimeout(() => { WR.sharing = false; }, 1500);   // a double tap can't open the share sheet twice
+      const slug = (WR.W.couple ? WR.W.couple.join("-") : "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      shareOrDownload(WR.card.blob, slug ? `trip-wrapped-${slug}.png` : "trip-wrapped.png").then(result => {
+        if (result === "downloaded") showToast("Card saved to Downloads");
+        else if (result === "saved") showToast("Saved", { icon: "check" });
+      });
+    }
+
+    // Draw the 1080×1920 card (a Story-sized image). Same look on both phones, whatever their theme.
+    async function drawWrapCard(W, prefs) {
+      const amounts = prefs.amounts !== false;
+      const regular = prefs.regular !== false ? wrCardRegular(W) : null;
+      const names = W.couple ? `${W.couple[0]} & ${W.couple[1]}` : "Your trip";
+      const lead = W.millions >= 1 ? W.currencies.find(c => c.code === "VND") : W.currencies.find(c => c.code !== "GBP");   // the same lead as the slide
+      const tiles = [];
+      const personaName = WR_PERSONA[W.persona];
+      const pc = W.cats.find(c => c.name === W.persona);
+      if (W.count >= 8) tiles.push({ label: "YOUR PERSONALITY", value: personaName, sub: W.persona === "Nesters" ? `Beds · ${wrPct(W.bedsPct)}` : `${W.persona} · ${wrPct(pc ? pc.pct : 0)}`, dot: WR_CAT[W.persona === "Nesters" ? "Accommodation" : W.persona] });
+      if (regular) tiles.push({ label: "OUR REGULAR", value: regular.label, sub: `×${regular.count}` });
+      if (lead && amounts) tiles.push({ label: "LOCAL MONEY", value: cashShort(lead.native, lead.code), sub: W.millions >= 1 ? `dong millionaires ×${W.millions}` : W.currencies.length > 1 ? `+ ${plural(W.currencies.length - 1, "more currency")}`.replace("currencys", "currencies") : `spent in ${WR_MONEY[lead.code] || lead.code}` });
+      else if (W.currencies.length && !amounts) tiles.push({ label: "CURRENCIES", value: String(W.currencies.length), sub: "one trip" });
+      tiles.push({ label: "EXPENSES", value: W.count.toLocaleString("en-GB"), sub: "logged together" });
+      if (W.photoCount) tiles.push({ label: "PHOTOS", value: String(W.photoCount), sub: "saved along the way" });
+      const nights = W.receipt.find(r => r.label === "Nights in a bed");
+      if (nights) tiles.push({ label: "NIGHTS", value: nights.value, sub: nights.sub.split(" · ")[0] });
+      const sample = names + "0123456789£₫$฿៛≈×·– " + tiles.map(t => t.label + t.value + t.sub).join("") + W.countries.map(x => x.c).join("");
+      await Promise.race([Promise.all(["700 112px Onest", "600 30px Onest", "500 40px Onest"].map(f => document.fonts.load(f, sample))).catch(() => {}), wrSleep(1500)]);
+      const onest = [...document.fonts].some(f => f.family.replace(/["']/g, "") === "Onest" && f.status === "loaded");
+      const face = onest ? "Onest, -apple-system, system-ui, sans-serif" : "-apple-system, system-ui, sans-serif";
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080; canvas.height = 1920;
+      const ctx = canvas.getContext("2d");
+      const font = (weight, size) => { ctx.font = `${weight} ${size}px ${face}`; };
+      const fit = (text, maxW, size, weight) => { let s = size; font(weight, s); while (ctx.measureText(text).width > maxW && s > 12) { s *= 0.96; font(weight, s); } return s; };
+      const rrect = (x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+      // The Home gradient, redrawn
+      const g = ctx.createLinearGradient(264, -71, 816, 1991);
+      g.addColorStop(0, "#1D33F0"); g.addColorStop(0.6, "#3A1FD6"); g.addColorStop(1, "#26139E");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1080, 1920);
+      const blob = (x, y, r, hex, a) => {
+        const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+        const [R, G, B] = [1, 3, 5].map(k => parseInt(hex.slice(k, k + 2), 16));
+        rg.addColorStop(0, `rgba(${R},${G},${B},${a})`); rg.addColorStop(1, `rgba(${R},${G},${B},0)`);
+        ctx.fillStyle = rg; ctx.fillRect(0, 0, 1080, 1920);
+      };
+      blob(260, 420, 700, "#5E8BFF", 0.85); blob(880, 280, 640, "#A46BFF", 0.85); blob(760, 1270, 760, "#7B4DFF", 0.85);
+      blob(180, 1760, 620, WR_CAT[W.persona === "Nesters" ? "Accommodation" : W.persona] || "#A46BFF", 0.35);
+      ctx.textBaseline = "alphabetic";
+      const white = a => `rgba(255,255,255,${a})`;
+      // Header
+      font(600, 30); ctx.fillStyle = white(0.75); ctx.textAlign = "left";
+      ctx.fillText(W.mode === "sofar" ? `THE STORY SO FAR · DAY ${W.scope.days} OF ${W.tripDays}` : "TRIP WRAPPED", 96, 228);
+      const y1 = W.scope.start.slice(0, 4), y2 = W.scope.asOf.slice(0, 4);
+      ctx.textAlign = "right"; ctx.fillText(y1 === y2 ? y1 : `${y1}–${y2.slice(2)}`, 984, 228); ctx.textAlign = "left";
+      if (W.mode === "preview") {
+        font(600, 26); const label = "EXAMPLE DATA"; const w = ctx.measureText(label).width + 40;
+        rrect(96, 252, w, 48, 24); ctx.fillStyle = white(0.2); ctx.fill(); ctx.fillStyle = "#FFFFFF"; ctx.fillText(label, 116, 285);
+      }
+      fit(names, 888, 112, 700); ctx.fillStyle = "#FFFFFF"; ctx.fillText(names, 96, 400);
+      font(500, 38); ctx.fillStyle = white(0.8);
+      ctx.fillText(`${niceDate(W.scope.start, "short")} ${y1} – ${niceDate(W.scope.asOf, "short")} ${y2} · ${plural(W.scope.days, "day")}`, 96, 466);
+      // The route
+      const stops = W.countries;
+      if (stops.length) {
+        const xs = stops.length === 1 ? [160] : stops.map((_, i) => 160 + (760 * i) / (stops.length - 1));
+        ctx.strokeStyle = white(0.55); ctx.lineWidth = 6; ctx.lineCap = "round";
+        if (stops.length > 1) { ctx.beginPath(); ctx.moveTo(160, 600); ctx.lineTo(920, 600); ctx.stroke(); }
+        stops.forEach((x, i) => {
+          ctx.beginPath(); ctx.arc(xs[i], 600, 48, 0, Math.PI * 2); ctx.fillStyle = "#FFFFFF"; ctx.fill();
+          font(400, 56); ctx.textAlign = "center"; ctx.fillText(flag(x.c), xs[i], 620);
+          const label = x.daysIn ? `${x.c} · ${plural(x.daysIn, "day")}` : x.c;
+          ctx.fillStyle = "#FFFFFF";
+          if (stops.length === 1) { ctx.textAlign = "left"; fit(label, 700, 34, 600); ctx.fillText(label, 236, 612); }
+          else { const slot = 760 / (stops.length - 1) - 16; fit(label, slot, 30, 600); ctx.fillText(ctx.measureText(label).width > slot ? x.c : label, xs[i], 700); }
+          ctx.textAlign = "left";
+        });
+      }
+      // The hero number
+      ctx.fillStyle = "#FFFFFF";
+      if (amounts) {
+        const hero = (W.pendingGBP > 0.02 * W.total ? "≈ " : "") + gbpWhole(W.total);
+        fit(hero, 888, 230, 700); ctx.fillText(hero, 96, 930);
+        font(500, 40); ctx.fillStyle = white(0.85);
+        ctx.fillText(W.mode === "sofar" ? `so far · ${gbpWhole(W.perDay)} a day` : `spent on the ground · ${gbpWhole(W.perDay)} a day for two`, 96, 1004);
+      } else {
+        const hero = plural(W.scope.days, "day");
+        fit(hero, 888, 230, 700); ctx.fillText(hero, 96, 930);
+        font(500, 40); ctx.fillStyle = white(0.85);
+        ctx.fillText(`${stops.length === 1 ? "one country" : `${stops.length} countries`} · ${plural(W.count, "expense")}`, 96, 1004);
+      }
+      // Four tiles
+      tiles.slice(0, 4).forEach((tl, i) => {
+        const x = 96 + (i % 2) * 456, y = 1090 + Math.floor(i / 2) * 260;
+        rrect(x, y, 432, 236, 44); ctx.fillStyle = white(0.12); ctx.fill();
+        font(600, 26); ctx.fillStyle = white(0.7); ctx.fillText(tl.label, x + 36, y + 62);
+        if (tl.dot) { ctx.beginPath(); ctx.arc(x + 396, y + 52, 9, 0, Math.PI * 2); ctx.fillStyle = tl.dot; ctx.fill(); }
+        ctx.fillStyle = "#FFFFFF"; fit(tl.value, 360, 60, 700); ctx.fillText(tl.value, x + 36, y + 140);
+        font(500, 28); ctx.fillStyle = white(0.7); ctx.fillText(tl.sub, x + 36, y + 192);
+      });
+      if (W.mode === "preview") {
+        ctx.save(); ctx.translate(540, 1000); ctx.rotate(-20 * Math.PI / 180); font(700, 220); ctx.fillStyle = white(0.08); ctx.textAlign = "center"; ctx.fillText("EXAMPLE", 0, 80); ctx.restore();
+      }
+      // Footer
+      let textX = 96;
+      try {
+        const icon = new Image(); icon.src = "icon-180.png";
+        await Promise.race([icon.decode(), wrSleep(1200).then(() => { throw new Error("icon slow"); })]);
+        ctx.save(); rrect(96, 1606, 64, 64, 14); ctx.clip(); ctx.drawImage(icon, 96, 1606, 64, 64); ctx.restore();
+        textX = 180;
+      } catch (err) { /* no icon in this copy: just the words */ }
+      font(500, 30); ctx.fillStyle = white(0.6); ctx.fillText("Made with Trip Budget", textX, 1650);
+      const out = await Promise.race([new Promise(resolve => canvas.toBlob(resolve, "image/png")), wrSleep(8000).then(() => null)]);
+      canvas.width = canvas.height = 0;   // free the memory straight away
+      if (!out) throw new Error("toBlob gave nothing");
+      return out;
+    }
+
+    // Shrink a line of big text until it fits its column
+    function wrFitText(el) {
+      el.style.fontSize = "";
+      const box = el.parentElement;
+      if (!box) return;
+      const cs = getComputedStyle(box);
+      const max = getComputedStyle(el).display === "block" ? el.clientWidth
+        : box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      let guard = 0;
+      while (el.scrollWidth > max + 1 && size > 18 && guard++ < 40) { size *= 0.94; el.style.fontSize = size + "px"; }
+    }
+
+    // Where it lives: a card on Home once the trip's over, a button in Insights during it, and a row in Settings
+    function renderWrapEntry() {
+      const mode = wrapMode(), ready = wrapReady(mode), prefs = wrPrefs();
+      const t = tripProgress();
+      const home = $("wrap-entry");
+      const showHome = mode === "final" && ready && daysBetween(t.end, t.today) <= 21;
+      home.hidden = !showHome;
+      if (showHome) {
+        $("wrap-entry-title").textContent = prefs.seen ? "Watch your Trip Wrapped again" : "Your Trip Wrapped is ready";
+        const lastMerge = data.lastMergeAt ? toISO(new Date(data.lastMergeAt)) : "";
+        $("wrap-entry-text").textContent = !data.partnerDeviceId ? `Merge ${data.names.partner}'s backup first for the whole story`
+          : lastMerge && lastMerge < t.end ? `Last merged ${niceDate(lastMerge)}. Merge again for the whole story.`
+          : `${plural(t.total, "day")} in about a minute`;
+      }
+      const ins = $("wrap-ins");
+      ins.hidden = !((mode === "final" || mode === "sofar") && ready);
+      ins.textContent = mode === "sofar" ? `The story so far · Day ${t.elapsed} of ${t.total}` : "Play Trip Wrapped";
+      $("wrap-settings-btn").textContent = mode === "final" && ready ? "Watch Trip Wrapped" : mode === "sofar" && ready ? "Watch the story so far" : "Preview Trip Wrapped";
+      $("wrap-settings-foot").textContent = (mode === "final" || mode === "sofar") && ready
+        ? "A one-minute story of your trip, ending with a card you can share."
+        : mode === "preview" ? `Uses made-up example spending. Nothing is saved. Yours unlocks on ${niceDate(data.trip.end)}.`
+        : mode === "sofar" && t.elapsed < 3 ? "Uses made-up example spending for now. The story so far appears on day 3."
+        : `Uses made-up example spending for now. Yours appears once 8 expenses are logged${data.partnerDeviceId ? "" : ` (merge ${data.names.partner}'s backup)`}.`;
+    }
+
+    // Controls
+    $("wr-prev").addEventListener("click", e => wrZone(-1, e));
+    $("wr-next").addEventListener("click", e => wrZone(1, e));
+    $("wr-close").addEventListener("click", closeWrapped);
+    $("wr-pause").addEventListener("click", () => (WR.pausedBy.has("button") ? wrResume("button") : wrPause("button")));
+    $("wr-frame").addEventListener("pointerdown", wrPointerDown);
+    $("wr-frame").addEventListener("pointermove", wrPointerMove);
+    window.addEventListener("pointerup", wrPointerUp);       // on the window, so a finger lifted anywhere still ends the gesture
+    window.addEventListener("pointercancel", wrPointerUp);
+    $("wr-frame").addEventListener("focusin", e => { if (WR.open && e.target.matches && e.target.matches(":focus-visible") && e.target.closest(".wr-zone")) wrSetManual(); });
+    $("wr-stage").addEventListener("click", function (event) {
+      if (event.detail !== 0 && performance.now() - WR.mountedAt < 700) return;   // still fading in: a fast tap from the last slide
+      const toggle = event.target.closest("[data-wr-toggle]");
+      if (toggle) {
+        const prefs = wrPrefs();
+        prefs[toggle.dataset.wrToggle] = !prefs[toggle.dataset.wrToggle];
+        wrSavePrefs(prefs);
+        toggle.setAttribute("aria-pressed", String(prefs[toggle.dataset.wrToggle]));
+        wrPrepareCard(150);
+      } else if (event.target.closest("#wr-share")) wrShare();
+      else if (event.target.closest("#wr-replay")) wrGo(0, 1);
+      else if (event.target.closest("#wr-done")) closeWrapped();
+    });
+    document.addEventListener("keydown", function (event) {
+      if (!WR.open || !$("dialog").hidden) return;
+      if (event.key === "Escape") { event.preventDefault(); closeWrapped(); }
+      else if (event.key === "ArrowRight") { wrSetManual(); wrGo(WR.i + 1, 1); }
+      else if (event.key === "ArrowLeft") { wrSetManual(); wrGo(WR.i - 1, -1); }
+      else if (event.key === " " && !event.target.closest("button")) { event.preventDefault(); WR.pausedBy.has("button") ? wrResume("button") : wrPause("button"); }
+    });
+    // The clock keeps running while the phone is locked, so pause it
+    document.addEventListener("visibilitychange", () => { if (WR.open) (document.hidden ? wrPause("hidden") : wrResume("hidden")); });
+
     // ---------- 11. SETTINGS ----------
     // The rows are built once; renderSettings() only fills in values, so typing isn't interrupted
     function buildSettings() {
@@ -3237,6 +4572,7 @@
 
     function render() {
       renderHome();
+      renderWrapEntry();
       if (!$("view-insights").hidden) renderInsights();   // only draw charts when they're visible
       if (!$("view-settings").hidden) renderSettings();
     }
@@ -3334,7 +4670,15 @@
     function updateSheetFields() {
       const isCash = sheetMode === "cash";
       const kind = getRadio("cash-kind") || "atm";
+      const isConvert = sheetMode === "convert";
       $("expense-fields").hidden = sheetMode !== "expense";
+      $("convert-fields").hidden = !isConvert;
+      $("convert-answer").hidden = !isConvert;
+      $("date-chip").hidden = isConvert;   // the converter always uses today's rate
+      $("quick-row").hidden = isConvert;   // its +000 lives in the answer card instead
+      $("note-field").hidden = isConvert;
+      $("converted").hidden = isConvert;   // the converter shows its answer in its own card
+      $("rate-note").hidden = isConvert;
       $("payment-fields").hidden = sheetMode !== "payment";
       $("cash-fields").hidden = !isCash;
       $("cash-kind-field").hidden = !isCash;
@@ -3346,7 +4690,7 @@
       $("fee-split-field").hidden = !(isCash && kind !== "count");
       $("amount-caption").hidden = !isCash;
       $("amount-caption").textContent = kind === "count" ? "Cash in the wallet now" : "Cash you got";
-      $("currency-field").querySelector("legend").textContent = isCash && kind === "exchange" ? "Currency you got" : "Currency";
+      $("currency-field").querySelector("legend").textContent = isCash && kind === "exchange" ? "Currency you got" : isConvert ? "From" : "Currency";
       if (isCash && !editing) $("sheet-title").textContent = kind === "count" ? "Count wallet" : "Add cash";
       updateZerosButton();
     }
@@ -3354,7 +4698,9 @@
     // The +000 button, only for currencies with lots of zeros
     function updateZerosButton() {
       const currency = getRadio("currency");
-      $("zeros-btn").hidden = !((sheetMode === "expense" || sheetMode === "cash") && (currency === "VND" || currency === "KHR"));
+      const zeros = currency === "VND" || currency === "KHR";
+      $("zeros-btn").hidden = !((sheetMode === "expense" || sheetMode === "cash") && zeros);
+      $("convert-zeros").hidden = !(sheetMode === "convert" && zeros);   // the converter has its own, above the keypad
     }
 
     // The country a new entry starts on for a date: from the route dates if they're filled in
@@ -3551,6 +4897,7 @@
     function updateConverted() {
       const out = $("converted");
       if (sheetMode === "payment") { out.textContent = "in £ (GBP)"; $("rate-note").textContent = ""; updateAmountLine(); return; }
+      if (sheetMode === "convert") { out.textContent = ""; $("rate-note").textContent = ""; updateConvert(); updateAmountLine(); return; }
       const amount = sheetAmount();
       const currency = getRadio("currency");
       const rate = sheetRate(currency);
@@ -3596,7 +4943,7 @@
     }
     // "Add" looks switched off until there's an amount (tapping it anyway still explains what's missing)
     function updateSubmitReady() {
-      $("submit-btn").setAttribute("aria-disabled", String(sheetMode !== "cash" && !(sheetAmount() > 0)));
+      $("submit-btn").setAttribute("aria-disabled", String(sheetMode !== "cash" && sheetMode !== "convert" && !(sheetAmount() > 0)));
     }
 
     // ---- Custom splits in the sheet ----
@@ -3865,7 +5212,7 @@
     // Closing asks first if you've typed something (force = true skips the question, e.g. after saving)
     async function closeSheet(force = false) {
       if (saving) return false;
-      if (!force && formSnapshot() !== snapshotAtOpen) {
+      if (!force && sheetMode !== "convert" && formSnapshot() !== snapshotAtOpen) {   // the converter has nothing to lose
         const what = editing ? "your changes" : "this " + ({ payment: "payment", cash: "cash entry" }[sheetMode] || "expense");
         if (!(await ask(`Discard ${what}?`, "What you've entered will be lost.", { ok: "Discard", cancel: "Keep editing", danger: true }))) {
           return false;
@@ -3959,6 +5306,152 @@
       fillSplit({ me: amounts.me / e.amount, partner: amounts.partner / e.amount }, amounts);
       splitTypedAsAmount = splitBy === "amount";
       if (splitTypedAsAmount) splitExact = null;   // saved amounts count as typed: a new total keeps the typed one
+    }
+
+    // ---- Quick converter ----
+    // "What's ₫150,000 in pounds?" without saving anything. Uses today's market rate (or your rate from Settings),
+    // works with no signal, and can turn the price into a new expense.
+    const BANKNOTES = {
+      VND: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000],
+      KHR: [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000],
+      USD: [1, 5, 10, 20, 50, 100],
+      THB: [10, 20, 50, 100, 500, 1000],
+      GBP: [5, 10, 20, 50]
+    };
+    const MONEY_WORD = { VND: "dong", KHR: "riel", USD: "dollars", THB: "baht", GBP: "pounds" };
+    let convertToFor = null;   // the "from" currency the "to" buttons were last drawn for
+    let convertNotesKey = null;   // the banknote grid as last drawn (redrawn only when it would change)
+    let convertTyped = null;      // the price as you typed it, so swapping back gives exactly that again
+
+    // Local money per £1 right now: today's market rate, or your rate from Settings
+    function rateNow(currency) {
+      if (currency === "GBP") return 1;
+      const m = marketRate(currency, toISO(new Date()));
+      return m ? m.rate : (data.rates[currency] || 0);
+    }
+    function convertAmount(amount, from, to) {
+      const a = rateNow(from), b = rateNow(to);
+      return a > 0 && b > 0 ? (amount / a) * b : NaN;
+    }
+    // Big local amounts read better short (₫1.2m); pounds, dollars and baht keep their pence
+    const cashFit = (amount, currency) => (wholeUnits(currency) ? cashShort(amount, currency) : cash(amount, currency));
+
+    function newConvert() {
+      editing = null;
+      clearPendingPhoto();
+      renderChoices();
+      convertToFor = null;
+      convertNotesKey = null;
+      convertTyped = null;
+      $("convert-to-choices").innerHTML = "";   // start on pounds each time
+      $("amount").value = "";
+      $("note").value = "";
+      $("date").value = toISO(new Date());
+      // Start on the money of the country you're in (or the last one you used)
+      let from = defaultCurrency(defaultCountry($("date").value), "expense");
+      if (from === "GBP") from = data.lastUsed.currency && data.lastUsed.currency !== "GBP" ? data.lastUsed.currency : "VND";
+      setRadio("currency", from);
+      currencyTouched = true;
+      $("sheet-title").textContent = "Convert";
+      $("submit-btn").textContent = "Done";
+      $("delete-btn").hidden = true;
+      openSheet("convert");
+      $("amount").focus({ preventScroll: true });
+    }
+
+    // The four "to" buttons: every currency except the one you're converting from
+    function renderConvertTo(from) {
+      if (convertToFor === from) return;
+      const current = getRadio("convert-to");
+      const local = COUNTRY_CURRENCY[defaultCountry(toISO(new Date()))];
+      const to = current && current !== from ? current : from !== "GBP" ? "GBP" : (local && local !== "GBP" ? local : "VND");
+      $("convert-to-choices").innerHTML = CURRENCIES.filter(c => c !== from)
+        .map(c => choice("convert-to", c, `<span class="code">${esc(c)}</span>`)).join("");
+      setRadio("convert-to", to);
+      convertToFor = from;
+    }
+
+    function updateConvert() {
+      const from = getRadio("currency");
+      if (!from) return;
+      renderConvertTo(from);
+      const to = getRadio("convert-to");
+      const amount = sheetAmount();
+      const result = $("convert-result");
+      $("convert-in").textContent = `In ${MONEY_WORD[to] || to}`;
+      const rateFrom = rateNow(from), rateTo = rateNow(to);
+      if (!(rateFrom > 0 && rateTo > 0)) {
+        result.classList.add("waiting");
+        result.textContent = "No rate yet";
+        $("convert-rate").textContent = `Add a ${[from, to].filter(c => !(rateNow(c) > 0)).join(" and ")} rate in Settings`;
+        $("convert-card-fee").hidden = true;
+        $("convert-notes-field").hidden = true;
+        convertNotesKey = null;
+        return;
+      }
+      const value = amount > 0 ? convertAmount(amount, from, to) : 0;
+      result.classList.toggle("waiting", !(amount > 0));
+      const answer = `<small>≈</small>${esc(cash(value, to))}`;
+      if (result.innerHTML !== answer) result.innerHTML = answer;   // VoiceOver reads it out only when it changes
+      // The rate, shown the readable way round (£1 = ₫34,337, not ₫1 = £0.00003)
+      const [strong, weak] = rateFrom <= rateTo ? [from, to] : [to, from];
+      const market = [from, to].filter(c => c !== "GBP").map(c => marketRate(c, toISO(new Date())));
+      const source = market.every(Boolean)
+        ? `market rate ${market.length ? `for ${niceDate(market.map(m => m.asOf).sort()[0], "short")}` : ""}`.trim()
+        : "your rate from Settings";
+      const ratio = rateNow(weak) / rateNow(strong);
+      const unit = ratio < 100 && wholeUnits(weak) ? 1000 : 1;   // "៛1,000 = ₫6,226", not "៛1 = ₫6"
+      $("convert-rate").textContent = `${cash(unit, strong)} = ${cash(ratio * unit, weak)} · ${source}`;
+      // Paying by card in pounds: what it really costs with each of your card fees
+      const fees = to === "GBP" && from !== "GBP" && amount > 0
+        ? ["me", "partner"].map(who => ({ who, fee: Number(data.cardFees[who]) || 0 })).filter(f => f.fee > 0) : [];
+      const sameFee = fees.length === 2 && fees[0].fee === fees[1].fee;
+      $("convert-card-fee").hidden = !fees.length;
+      $("convert-card-fee").textContent = (sameFee ? [fees[0]] : fees).map(f =>
+        `On ${sameFee ? "your cards" : `${data.names[f.who]}'s card`} ≈ ${gbp(value * (1 + f.fee / 100))} (${f.fee}% fee)`).join(" · ");
+      // Banknotes of the local money involved, each worth so much in the other currency
+      const notes = from !== "GBP" ? from : to !== "GBP" ? to : null;
+      const other = notes === from ? to : from;
+      $("convert-notes-field").hidden = !notes || !BANKNOTES[notes];
+      const notesKey = notes ? `${notes}|${other}|${rateNow(notes)}|${rateNow(other)}` : null;
+      if (notes && BANKNOTES[notes] && notesKey !== convertNotesKey) {   // redrawing would lose the tile you tapped
+        convertNotesKey = notesKey;
+        $("convert-notes-label").textContent = `${(MONEY_WORD[notes] || notes).replace(/^./, c => c.toUpperCase()).replace(/s$/, "")} notes at a glance`;
+        $("convert-notes").innerHTML = BANKNOTES[notes].map(n => `
+          <button type="button" class="note-tile" data-note="${n}" data-currency="${notes}" aria-label="${esc(cash(n, notes))} is about ${esc(cash(convertAmount(n, notes, other), other))}">
+            <b>${esc(cashFit(n, notes))}</b><span>${esc(cashFit(convertAmount(n, notes, other), other))}</span>
+          </button>`).join("");
+      }
+    }
+
+    // Swap: what you typed becomes the answer, and the answer becomes what you typed
+    function swapConvert() {
+      const from = getRadio("currency"), to = getRadio("convert-to");
+      const result = convertAmount(sheetAmount(), from, to);
+      setRadio("currency", to);
+      convertToFor = null;
+      renderConvertTo(to);
+      setRadio("convert-to", from);
+      if (convertTyped && convertTyped.currency === to) $("amount").value = convertTyped.text;   // back to what you typed
+      else if (result > 0) $("amount").value = String(roundIn(result, to));
+      updateZerosButton();
+      updateConverted();
+    }
+
+    // Bought it? Open a new expense with this price already in
+    function logConverted() {
+      const amount = sheetAmount(), currency = getRadio("currency");
+      const back = lastFocus;
+      newExpense();
+      lastFocus = back;   // closing still goes back to where you started
+      setRadio("currency", currency);
+      currencyTouched = true;
+      if (amount > 0) $("amount").value = String(amount);
+      updateZerosButton();
+      updateConverted();
+      updateSplitSummary();
+      updateWalletEffect();
+      snapshotAtOpen = formSnapshot();   // Cancel straight away closes quietly
     }
 
     function newPayment() {
@@ -4185,6 +5678,7 @@
       if (saving) return;
       if (photoBusy) { showToast("One moment: photo still processing"); return; }
       if (sheetMode === "cash") { saveCashMove(); return; }
+      if (sheetMode === "convert") { closeSheet(true); return; }   // "Done"
 
       const amount = sheetAmount();
       const date = $("date").value;
@@ -4363,7 +5857,20 @@
 
     // Example data, so you can try everything before the trip. Each entry is marked example: true.
     function loadExamples() {
-      const start = data.trip.start;
+      const examples = buildExamples(data.trip.start);
+      data.cashMoves.push(...examples.cashMoves);
+      data.expenses.push(...examples.expenses);
+      data.payments.push(...examples.payments);
+      saveData();
+      render();
+      showToast("Examples loaded");
+    }
+
+    // The example trip as { cashMoves, expenses, payments }, without saving it (Trip Wrapped previews it too)
+    function buildExamples(start) {
+      const out = { cashMoves: [], expenses: [], payments: [] };
+      let nextId = newId();
+      const id = () => nextId++;
       // Cash first (so a wallet count on day 1 comes before that day's spending)
       const moves = [
         // [day, kind, who, currency, amount, details]
@@ -4374,11 +5881,11 @@
         [8, "atm", "me", "THB", 6000, { fee: 220, country: "Thailand" }]
       ];
       for (const [day, kind, who, currency, amount, details] of moves) {
-        const move = { id: newId(), date: addDays(start, day), kind, who, currency, amount, rate: data.rates[currency] || 1,
+        const move = { id: id(), date: addDays(start, day), kind, who, currency, amount, rate: data.rates[currency] || 1,
           note: "", updatedAt: Date.now(), example: true, ...details };
         if (kind !== "count") { move.shared = true; move.cardFee = 0; }
         if (move.fromCurrency) move.fromRate = data.rates[move.fromCurrency] || 1;
-        data.cashMoves.push(move);
+        out.cashMoves.push(move);
       }
       const rows = [
         // [day of trip, amount, currency, country, category, who paid, shared?, note, nights, paid with]
@@ -4405,7 +5912,7 @@
       for (const [day, amount, currency, country, category, paidBy, shared, note, nights, method] of rows) {
         const custom = typeof shared === "number";
         const expense = {
-          id: newId(), date: addDays(start, day), amount, currency, rate: data.rates[currency] || 1,
+          id: id(), date: addDays(start, day), amount, currency, rate: data.rates[currency] || 1,
           country, category, paidBy, shared: custom || shared, note, nights: nights || 1, method, cardFee: method === "card" ? 0 : undefined,
           hasPhoto: false, updatedAt: Date.now(), example: true
         };
@@ -4414,12 +5921,10 @@
           const shares = { me: mine, partner: roundIn(amount - mine, currency) };
           setShares(expense, shares[paidBy], shares[paidBy === "me" ? "partner" : "me"], shared === 0 ? "amount" : "percent");
         }
-        data.expenses.push(expense);
+        out.expenses.push(expense);
       }
-      data.payments.push({ id: newId(), date: addDays(start, 4), amount: 20, from: "partner", note: "Cash for the bus", updatedAt: Date.now(), example: true });
-      saveData();
-      render();
-      showToast("Examples loaded");
+      out.payments.push({ id: id(), date: addDays(start, 4), amount: 20, from: "partner", note: "Cash for the bus", updatedAt: Date.now(), example: true });
+      return out;
     }
 
     function clearExamples() {
@@ -4501,7 +6006,10 @@
       updateWalletEffect();
       updateCashSummary();
     });
-    $("amount").addEventListener("input", () => { updateConverted(); updateSplitSummary(); updateWalletEffect(); updateCashSummary(); });
+    $("amount").addEventListener("input", () => {
+      if (sheetMode === "convert") convertTyped = { text: $("amount").value, currency: getRadio("currency") };
+      updateConverted(); updateSplitSummary(); updateWalletEffect(); updateCashSummary();
+    });
     ["atm-fee", "bank-charged", "gave-amount"].forEach(id => $(id).addEventListener("input", updateCashSummary));
     // The keyboard's "done" key just closes the keyboard, rather than saving straight away
     $("amount").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } });
@@ -4526,6 +6034,18 @@
       }
       updateSplitSummary();   // now say if the share doesn't make sense
     });
+    $("convert-swap").addEventListener("click", swapConvert);
+    $("convert-log").addEventListener("click", logConverted);
+    // A banknote: convert that note (from its own currency)
+    $("convert-notes").addEventListener("click", function (event) {
+      const tile = event.target.closest("[data-note]");
+      if (!tile) return;
+      if (getRadio("currency") !== tile.dataset.currency) swapConvert();
+      $("amount").value = tile.dataset.note;
+      convertTyped = { text: tile.dataset.note, currency: tile.dataset.currency };
+      updateZerosButton();
+      updateConverted();
+    });
     $("split-card").addEventListener("keydown", e => {
       if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type === "text") { e.preventDefault(); e.target.blur(); }
     });
@@ -4542,9 +6062,12 @@
       try { if (this.showPicker) this.showPicker(); } catch (err) { /* iOS opens it by itself */ }
     });
     // +000: adds three zeros to the amount. Pressing it doesn't take focus, so the keypad stays open.
-    $("zeros-btn").addEventListener("pointerdown", e => e.preventDefault());
-    $("zeros-btn").addEventListener("mousedown", e => e.preventDefault());
-    $("zeros-btn").addEventListener("click", () => {
+    ["zeros-btn", "convert-zeros"].forEach(id => {
+      $(id).addEventListener("pointerdown", e => e.preventDefault());
+      $(id).addEventListener("mousedown", e => e.preventDefault());
+      $(id).addEventListener("click", addZeros);
+    });
+    function addZeros() {
       const input = $("amount");
       const value = input.value.trim();
       // "45,000" → "45000" first (dong and riel have no pence). Anything else that isn't plain digits is left alone.
@@ -4552,7 +6075,7 @@
       if (/^\d+$/.test(digits) && digits.length < 12) input.value = digits + "000";
       input.focus({ preventScroll: true });
       input.dispatchEvent(new Event("input"));
-    });
+    }
     $("regulars").addEventListener("click", function (event) {
       const button = event.target.closest("[data-regular]");
       if (button && regularsShown[button.dataset.regular]) useRegular(regularsShown[button.dataset.regular]);
@@ -4653,6 +6176,8 @@
       if (!action) return;
       if (action.dataset.action === "record-payment") newPayment();
       else if (action.dataset.action === "add-expense") newExpense();
+      else if (action.dataset.action === "convert") newConvert();
+      else if (action.dataset.action === "open-wrapped") openWrapped(action);
       else if (action.dataset.action === "see-all") { scrollMemory.activity = 0; showView("activity"); }
       else if (action.dataset.action === "add-cash") newCash("atm");
       else if (action.dataset.action === "count-cash") newCash("count");
@@ -5155,6 +6680,7 @@
 
       // Remember your partner's phone, so next time we don't have to ask whose backup it is
       if (swap && incoming.deviceId && incoming.deviceId !== data.deviceId) data.partnerDeviceId = incoming.deviceId;
+      if (swap) data.lastMergeAt = Date.now();   // Trip Wrapped reminds you to merge again if the last one was before the trip ended
       else if (fresh && !swap && incoming.partnerDeviceId && !data.partnerDeviceId) data.partnerDeviceId = incoming.partnerDeviceId;
 
       // Remove anything here that the other phone deleted. (Their photos stay stored until the merge
@@ -5340,7 +6866,9 @@
     });
     document.body.classList.add("launching");
     setTimeout(() => document.body.classList.remove("launching"), 1000);
-    showView(location.hash.slice(1));
+    const startHash = location.hash;   // showView rewrites it, so read it first
+    showView(startHash.slice(1));
+    if (startHash === "#convert") newConvert();
     if (loadProblem) {
       tell("Your saved data couldn't be read", "The app started empty, and a copy of the old data was kept in this browser. If you have a backup, restore it in Settings.");
     }
@@ -5366,9 +6894,10 @@
     requestPersistence();
     claudeDownloads();   // check early, so the first Back up tap isn't delayed
     // Photos load in the background, then we redraw so the thumbnails appear
-    loadPhotos()
+    const photosReady = loadPhotos()
       .then(render)
       .catch(err => console.warn("Photos aren't available in this browser", err));
+    if (startHash === "#wrapped") openWrapped();   // e.g. for trying it on a Mac
   </script>
 </body>
 </html>
